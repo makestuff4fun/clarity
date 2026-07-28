@@ -39,6 +39,7 @@ Future<bool> createDefaultCategories() async {
 
 TransactionWallet defaultWallet() {
   return TransactionWallet(
+    archived: false,
     walletPk: "0",
     name: "default-account-name".tr(),
     dateCreated: DateTime.now(),

@@ -325,6 +325,7 @@ class _ObjectivePageContentState extends State<_ObjectivePageContent> {
                                   CategoryIcon(
                                     categoryPk: "-1",
                                     category: TransactionCategory(
+                                      archived: false,
                                       categoryPk: "-1",
                                       name: "",
                                       dateCreated: DateTime.now(),

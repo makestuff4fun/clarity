@@ -55,6 +55,7 @@ class _AddAssociatedTitlePageState extends State<AddAssociatedTitlePage> {
     await database.createOrUpdateAssociatedTitle(
       insert: widget.associatedTitle == null,
       TransactionAssociatedTitle(
+        archived: false,
         associatedTitlePk: widget.associatedTitle != null
             ? widget.associatedTitle!.associatedTitlePk
             : "-1",

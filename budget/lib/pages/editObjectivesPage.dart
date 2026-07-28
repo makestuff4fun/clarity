@@ -225,6 +225,7 @@ class _EditObjectivesPageState extends State<EditObjectivesPage> {
                             categoryPk: "-1",
                             size: 31,
                             category: TransactionCategory(
+                              archived: false,
                               categoryPk: "-1",
                               name: "",
                               dateCreated: DateTime.now(),

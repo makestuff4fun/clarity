@@ -1,8 +1,9 @@
 // Verifies that a database produced by Cashew opens in Clarity unchanged.
 //
-// Clarity did not alter the drift schema during the rebrand, so a Cashew
-// backup (.sqlite) is byte-compatible: importing one is just a file copy
-// followed by a normal open. These tests exercise that path directly against
+// Clarity tracks upstream Cashew's Play Store schema (v48), so a current
+// Cashew backup (.sqlite) is byte-compatible: importing one is just a file
+// copy followed by a normal open (older v46 backups are migrated — see
+// restore_v48_test.dart). These tests exercise that path directly against
 // the real schema, without the Flutter app or path_provider.
 //
 // Run with: flutter test test/cashew_migration_test.dart
@@ -39,7 +40,7 @@ void main() {
     final version = await db.customSelect('PRAGMA user_version;').getSingle();
 
     expect(version.data['user_version'], schemaVersionGlobal);
-    expect(schemaVersionGlobal, 46,
+    expect(schemaVersionGlobal, 48,
         reason: 'Changing the schema breaks Cashew backup compatibility');
 
     await db.close();
@@ -61,6 +62,7 @@ void main() {
         order: 0,
         currency: 'usd',
         decimals: 2,
+        archived: false,
       ),
     );
     await cashew.createOrUpdateCategory(
@@ -74,6 +76,7 @@ void main() {
         order: 0,
         income: false,
         methodAdded: MethodAdded.csv,
+        archived: false,
       ),
     );
     // insert: true assigns fresh primary keys, so resolve the real one.

@@ -105,8 +105,8 @@ Future<bool> leaveSharedBudget(Budget sharedBudget) async {
   if (!_shareAvailable) {
     return false;
   }
-  removeMemberFromBudget(sharedBudget.sharedKey!,
-      shareBackend.currentUserEmail!, sharedBudget);
+  removeMemberFromBudget(
+      sharedBudget.sharedKey!, shareBackend.currentUserEmail!, sharedBudget);
   removedSharedFromBudget(sharedBudget, removeFromServer: false);
   return true;
 }
@@ -330,6 +330,7 @@ Future<int> downloadTransactionsFromBudgets(
           await database.createOrUpdateCategory(
             insert: true,
             TransactionCategory(
+              archived: false,
               categoryPk: "-1",
               name: transactionDecoded["categoryName"],
               dateCreated: DateTime.now(),
@@ -518,8 +519,7 @@ Future<bool> sendTransactionDelete(
   return true;
 }
 
-Future<bool> deleteOnServer(
-    String? transactionSharedKey, Budget budget) async {
+Future<bool> deleteOnServer(String? transactionSharedKey, Budget budget) async {
   if (appStateSettings["sharedBudgets"] == false) return false;
   if (transactionSharedKey != null && transactionSharedKey != "null") {
     await shareBackend.addTransactionLog(budget.sharedKey!, {

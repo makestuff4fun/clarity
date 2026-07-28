@@ -7,6 +7,7 @@ List<TransactionCategory> defaultCategories() {
   return [
     // Note "0" categoryPk is reserved for wallet/account total correction category
     TransactionCategory(
+      archived: false,
       categoryPk: "1",
       name: "default-category-dining".tr(),
       colour: toHexString(Colors.blueGrey),
@@ -17,6 +18,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "2",
       name: "default-category-groceries".tr(),
       colour: toHexString(Colors.green),
@@ -27,6 +29,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "3",
       name: "default-category-shopping".tr(),
       colour: toHexString(Colors.pink),
@@ -37,6 +40,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "4",
       name: "default-category-transit".tr(),
       colour: toHexString(Colors.yellow),
@@ -47,6 +51,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "5",
       name: "default-category-entertainment".tr(),
       colour: toHexString(Colors.blue),
@@ -57,6 +62,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "6",
       name: "default-category-bills-fees".tr(),
       colour: toHexString(Colors.green),
@@ -87,6 +93,7 @@ List<TransactionCategory> defaultCategories() {
     //   income: false,
     // ),
     TransactionCategory(
+      archived: false,
       categoryPk: "7",
       name: "default-category-gifts".tr(),
       colour: toHexString(Colors.red),
@@ -97,6 +104,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "8",
       name: "default-category-beauty".tr(),
       colour: toHexString(Colors.purple),
@@ -107,6 +115,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "9",
       name: "default-category-work".tr(),
       colour: toHexString(Colors.brown),
@@ -117,6 +126,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "10",
       name: "default-category-travel".tr(),
       colour: toHexString(Colors.orange),
@@ -127,6 +137,7 @@ List<TransactionCategory> defaultCategories() {
       income: false,
     ),
     TransactionCategory(
+      archived: false,
       categoryPk: "11",
       name: "default-category-income".tr(),
       colour: toHexString(Colors.deepPurple.shade300),

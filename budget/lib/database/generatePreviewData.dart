@@ -80,6 +80,7 @@ Future generatePreviewData() async {
   await createDefaultCategories();
   await database.createOrUpdateWallet(
     TransactionWallet(
+      archived: false,
       walletPk: "0",
       name: "Bank",
       colour: null,
@@ -94,6 +95,7 @@ Future generatePreviewData() async {
   );
   await database.createOrUpdateWallet(
     TransactionWallet(
+      archived: false,
       walletPk: "10",
       name: "Euros",
       colour: "0xff66bb6a",
@@ -108,6 +110,7 @@ Future generatePreviewData() async {
   );
   await database.createOrUpdateWallet(
     TransactionWallet(
+      archived: false,
       walletPk: "11",
       name: "Bitcoin",
       colour: "0xffef5350",

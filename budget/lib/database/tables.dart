@@ -25,7 +25,7 @@ import 'package:budget/pages/activityPage.dart';
 import 'package:flutter/material.dart' show RangeValues;
 part 'tables.g.dart';
 
-int schemaVersionGlobal = 46;
+int schemaVersionGlobal = 48;
 
 // To update and migrate the database, check the README
 
@@ -264,6 +264,8 @@ class Wallets extends Table {
       .nullable()
       .withDefault(const Constant(null))
       .map(const HomePageWidgetDisplayListInColumnConverter())();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  TextColumn get emojiIconName => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {walletPk};
@@ -358,6 +360,7 @@ class Categories extends Table {
       .references(Categories, #categoryPk)
       .withDefault(const Constant(null))
       .nullable()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
   // Attributes to configure sharing of transactions:
   // sharedKey will have the key referencing the entry in the sync backend, if this is null, it is not shared
@@ -401,6 +404,7 @@ class AssociatedTitles extends Table {
       dateTime().withDefault(Constant(DateTime.now())).nullable()();
   IntColumn get order => integer()();
   BoolColumn get isExactMatch => boolean().withDefault(const Constant(false))();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {associatedTitlePk};
@@ -504,6 +508,10 @@ class ScannerTemplates extends Table {
       text().references(Wallets, #walletPk).withDefault(const Constant("0"))();
   // TODO: if it contains certain keyword ignore these emails
   BoolColumn get ignore => boolean().withDefault(const Constant(false))();
+  TextColumn get defaultTitle => text()
+      .withLength(max: NAME_LIMIT)
+      .nullable()
+      .withDefault(const Constant(null))();
 
   @override
   Set<Column> get primaryKey => {scannerTemplatePk};
@@ -535,6 +543,34 @@ class Objectives extends Table {
 
   @override
   Set<Column> get primaryKey => {objectivePk};
+}
+
+// Column order mirrors upstream Cashew v48 so backups stay byte-compatible.
+@DataClassName('Tag')
+class Tags extends Table {
+  DateTimeColumn get dateCreated =>
+      dateTime().clientDefault(() => new DateTime.now())();
+  DateTimeColumn get dateTimeModified => dateTime().nullable()();
+  IntColumn get order => integer()();
+  BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  TextColumn get name => text().withLength(max: NAME_LIMIT)();
+  TextColumn get colour => text().withLength(max: COLOUR_LIMIT).nullable()();
+  TextColumn get iconName => text().nullable()();
+  TextColumn get emojiIconName => text().nullable()();
+  TextColumn get tagPk => text().clientDefault(() => uuid.v4())();
+
+  @override
+  Set<Column> get primaryKey => {tagPk};
+}
+
+@DataClassName('TransactionToTagLink')
+class TransactionToTagLinks extends Table {
+  TextColumn get transactionPk =>
+      text().references(Transactions, #transactionPk).nullable()();
+  TextColumn get tagPk => text().references(Tags, #tagPk).nullable()();
+
+  @override
+  Set<Column> get primaryKey => {transactionPk, tagPk};
 }
 
 class TransactionWithCategory {
@@ -687,6 +723,8 @@ class CategoryWithTotal {
   ScannerTemplates,
   DeleteLogs,
   Objectives,
+  Tags,
+  TransactionToTagLinks,
 ])
 class FinanceDatabase extends _$FinanceDatabase {
   // FinanceDatabase() : super(_openConnection());
@@ -862,9 +900,11 @@ class FinanceDatabase extends _$FinanceDatabase {
           await migrator.alterTable(TableMigration(transactions));
           await migrator.deleteTable("Labels");
         }
+        // The generated step-by-step migrations from upstream Cashew end at
+        // v46; later versions are handled manually below.
         await migrator.runMigrationSteps(
-          from: from,
-          to: to,
+          from: from > 46 ? 46 : from,
+          to: to > 46 ? 46 : to,
           steps: migrationSteps(
             from33To34: (m, schema) async {
               await m.addColumn(schema.wallets, schema.wallets.decimals);
@@ -1165,6 +1205,38 @@ class FinanceDatabase extends _$FinanceDatabase {
             },
           ),
         );
+        // Upstream Cashew's Play Store build moved to schema v48 (archived
+        // flags, wallet emoji icons, scanner default titles, tags) but the
+        // public source drop only ships migrations up to v46, so these steps
+        // are reconstructed from a real v48 database. Each addColumn is
+        // guarded so a database that already has some of these survives.
+        if (from <= 47) {
+          for (final MapEntry<String, Future<void> Function()> step
+              in <String, Future<void> Function()>{
+            'wallets.archived': () =>
+                migrator.addColumn(wallets, wallets.archived),
+            'wallets.emojiIconName': () =>
+                migrator.addColumn(wallets, wallets.emojiIconName),
+            'categories.archived': () =>
+                migrator.addColumn(categories, categories.archived),
+            'associatedTitles.archived': () =>
+                migrator.addColumn(associatedTitles, associatedTitles.archived),
+            'scannerTemplates.defaultTitle': () => migrator.addColumn(
+                scannerTemplates, scannerTemplates.defaultTitle),
+          }.entries) {
+            try {
+              await step.value();
+            } catch (e) {
+              print("Migration Error: Error creating column " +
+                  step.key +
+                  " " +
+                  e.toString());
+            }
+          }
+          // createTable uses CREATE TABLE IF NOT EXISTS, safe to re-run.
+          await migrator.createTable($TagsTable(database));
+          await migrator.createTable($TransactionToTagLinksTable(database));
+        }
       },
       beforeOpen: (details) async {
         // This code exists because migration 42to43 may have not run correctly...
@@ -2125,6 +2197,7 @@ class FinanceDatabase extends _$FinanceDatabase {
           .map((TransactionCategory category) {
         return TransactionAssociatedTitleWithCategory(
           title: TransactionAssociatedTitle(
+            archived: false,
             associatedTitlePk: "-1",
             categoryFk: category.categoryPk,
             title: category.name,

@@ -115,6 +115,7 @@ class _AddWalletPageState extends State<AddWalletPage> {
   Future<TransactionWallet> createTransactionWallet() async {
     int numberOfWallets = (await database.getTotalCountOfWallets())[0] ?? 0;
     return TransactionWallet(
+      archived: false,
       walletPk: widget.wallet != null ? widget.wallet!.walletPk : "-1",
       name: selectedTitle ?? "",
       colour: toHexString(selectedColor),
@@ -968,6 +969,7 @@ Future<TransactionCategory> initializeBalanceCorrectionCategory() async {
       insert: false,
       updateSharedEntry: false,
       TransactionCategory(
+        archived: false,
         categoryPk: "0",
         name: "default-category-account-amount-balancing".tr(),
         colour: toHexString(Colors.blueGrey),

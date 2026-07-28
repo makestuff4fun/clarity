@@ -3031,6 +3031,7 @@ Future<bool> addAssociatedTitles(
         await database.createOrUpdateAssociatedTitle(
           insert: true,
           TransactionAssociatedTitle(
+            archived: false,
             associatedTitlePk: "-1",
             categoryFk: selectedCategory.categoryPk,
             isExactMatch: false,

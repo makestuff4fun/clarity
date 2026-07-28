@@ -180,6 +180,7 @@ class _AddCategoryPageState extends State<AddCategoryPage>
           await database.getCategoryInstance(widget.category!.categoryPk);
     }
     return TransactionCategory(
+      archived: false,
       categoryPk: widget.category != null ? widget.category!.categoryPk : "-1",
       name: (selectedTitle ?? "").trim(),
       dateCreated: widget.category != null
@@ -1012,6 +1013,7 @@ class _AddCategoryPageState extends State<AddCategoryPage>
                                         await database
                                             .createOrUpdateAssociatedTitle(
                                           TransactionAssociatedTitle(
+                                            archived: false,
                                             associatedTitlePk: associatedTitle
                                                 .associatedTitlePk,
                                             categoryFk: widget.category == null
@@ -1072,6 +1074,7 @@ class _AddTitleState extends State<AddTitle> {
           await database.createOrUpdateAssociatedTitle(
             insert: true,
             TransactionAssociatedTitle(
+              archived: false,
               associatedTitlePk: "-1",
               categoryFk:
                   widget.category == null ? "-1" : widget.category!.categoryPk,
@@ -1495,6 +1498,7 @@ class FakeCategoryEntryPlaceholder extends StatelessWidget {
       categoryPk: "-1",
       noBackground: true,
       category: TransactionCategory(
+        archived: false,
         categoryPk: "-1",
         name: "",
         dateCreated: DateTime.now(),
@@ -1581,6 +1585,7 @@ class IconPreview extends StatelessWidget {
                   selectedColor.toString()),
               categoryPk: "-1",
               category: TransactionCategory(
+                archived: false,
                 categoryPk: "-1",
                 name: "",
                 dateCreated: DateTime.now(),
