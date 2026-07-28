@@ -66,6 +66,33 @@ Future<bool> signInSyncAccount(
   if (await checkLockedFeatureIfInDemoMode(context) == false) return false;
   if (appStateSettings["emailScanning"] == false) mailPermissions = false;
 
+  // Without a configured sync backend there is nothing to sign in to. Bail
+  // out quietly — and clear any signed-in state carried over from a Cashew
+  // backup, so automatic sign-in stops retrying on every launch.
+  if (syncBackendConfigured == false) {
+    if (syncUser != null ||
+        appStateSettings["hasSignedIn"] == true ||
+        appStateSettings["currentUserEmail"] != "") {
+      syncUser = null;
+      await updateSettings("currentUserEmail", "", updateGlobalState: false);
+      await updateSettings("hasSignedIn", false, updateGlobalState: false);
+      refreshUIAfterLoginChange();
+    }
+    if (silentSignIn != true) {
+      openSnackbar(
+        SnackbarMessage(
+          title: "Sync not set up",
+          description: "This build has no sync backend configured",
+          icon: appStateSettings["outlinedIcons"]
+              ? Icons.cloud_off_outlined
+              : Icons.cloud_off_rounded,
+          timeout: Duration(milliseconds: 3400),
+        ),
+      );
+    }
+    return false;
+  }
+
   try {
     if (mailPermissions == true &&
         syncUser != null &&
