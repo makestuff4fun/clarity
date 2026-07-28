@@ -1,5 +1,10 @@
 # Clarity
 
+> [!WARNING]
+> **Work in progress.** This fork is under active development and not yet
+> ready for general use. Expect rough edges, missing features (all cloud
+> sync backends are unimplemented stubs), and breaking changes.
+
 A private, offline-first personal finance app for Android, iOS, and the web.
 
 Clarity tracks transactions, budgets, savings goals, and recurring subscriptions
