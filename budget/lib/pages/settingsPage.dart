@@ -28,7 +28,6 @@ import 'package:budget/pages/editCategoriesPage.dart';
 import 'package:budget/pages/editWalletsPage.dart';
 import 'package:budget/pages/notificationsPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
-import 'package:budget/widgets/accountAndBackup.dart';
 import 'package:budget/widgets/importDB.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/notificationsSettings.dart';
@@ -36,7 +35,6 @@ import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/radioItems.dart';
-import 'package:budget/widgets/ratingPopup.dart';
 import 'package:budget/widgets/restartApp.dart';
 import 'package:budget/widgets/selectAmount.dart';
 import 'package:budget/widgets/selectColor.dart';
@@ -181,22 +179,6 @@ class MorePages extends StatelessWidget {
                   isOutlined: true,
                 ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsetsDirectional.symmetric(
-                      vertical: 5, horizontal: 4),
-                  child: SettingsContainer(
-                    onTap: () {
-                      openBottomSheet(context, RatingPopup(), fullSnap: true);
-                    },
-                    title: "feedback".tr(),
-                    icon: appStateSettings["outlinedIcons"]
-                        ? Icons.rate_review_outlined
-                        : Icons.rate_review_rounded,
-                    isOutlined: true,
-                  ),
-                ),
-              ),
             ],
           ),
           Row(
@@ -224,11 +206,6 @@ class MorePages extends StatelessWidget {
                           ),
                         )
                       : SizedBox.shrink(),
-              if (hasSideNavigation == false)
-                Expanded(
-                    child: AccountLoginButton(
-                  key: settingsAccountLoginButtonKey,
-                )),
             ],
           ),
           if (hasSideNavigation == false)
@@ -600,11 +577,6 @@ class SettingsPageContent extends StatelessWidget {
         ExportDB(),
 
         ImportDB(),
-
-        AccountLoginButton(
-          isOutlinedButton: false,
-          forceButtonName: "google-drive".tr(),
-        ),
       ],
     );
   }
