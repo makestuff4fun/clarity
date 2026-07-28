@@ -1,4 +1,5 @@
 import 'package:budget/colors.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/database/generatePreviewData.dart';
 import 'package:budget/database/tables.dart';
 import 'package:budget/pages/addBudgetPage.dart';
@@ -463,15 +464,15 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                         // Let's just use the functionality below this
                         // await signInAndSync(context, next: () {});
 
-                        await signInGoogle(
+                        await signInSyncAccount(
                           context: context,
                           waitForCompletion: false,
                           next: () {},
                         );
                         if (appStateSettings["username"] == "" &&
-                            googleUser != null) {
+                            syncUser != null) {
                           updateSettings(
-                              "username", googleUser?.displayName ?? "",
+                              "username", syncUser?.displayName ?? "",
                               pagesNeedingRefresh: [0],
                               updateGlobalState: false);
                         }
@@ -497,7 +498,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                         // }
                         // if (result == true) {
                         //   chooseBackup(context, hideDownloadButton: true);
-                        // } else if (result == false && googleUser != null) {
+                        // } else if (result == false && syncUser != null) {
                         //   openLoadingPopup(context);
                         //   // set this to true so cloud functions run
                         //   entireAppLoaded = true;
@@ -531,7 +532,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
                     );
                   },
                   title: "sign-in-with-google".tr(),
-                  icon: MoreIcons.google,
+                  icon: Icons.account_circle_rounded,
                   isExpanded: false,
                 ),
           getPlatform() == PlatformOS.isIOS

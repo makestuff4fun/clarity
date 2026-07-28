@@ -104,11 +104,10 @@ class _ImportCSVState extends State<ImportCSV> {
   Future<void> _assignColumns(String csvString,
       {bool importFromSheets = false}) async {
     try {
-      List<List<String>> fileContents = CsvToListConverter().convert(
-        csvString,
-        eol: '\n',
-        shouldParseNumbers: false,
-      );
+      List<List<String>> fileContents = Csv(lineDelimiter: '\n')
+          .decode(csvString)
+          .map((row) => row.map((field) => field.toString()).toList())
+          .toList();
       int maxColumns = fileContents.fold(
           0, (prev, element) => element.length > prev ? element.length : prev);
 
@@ -236,15 +235,6 @@ class _ImportCSVState extends State<ImportCSV> {
         context,
         PopupFramework(
           hasPadding: false,
-          outsideExtraWidget: appStateSettings["showFAQAndHelpLink"] == true
-              ? OutsideExtraWidgetIconButton(
-                  iconData: appStateSettings["outlinedIcons"]
-                      ? Icons.live_help_outlined
-                      : Icons.live_help_rounded,
-                  onPressed: () => openUrl(
-                      "https://cashewapp.web.app/faq.html#import-csv-data"),
-                )
-              : null,
           title: "assign-columns".tr(),
           subtitle: (fileContents.length - 1).toString() +
               " " +
@@ -830,8 +820,8 @@ Future saveSampleCSV({required BuildContext boxContext}) async {
       "",
       "",
     ]);
-    String csv = ListToCsvConverter().convert(csvData);
-    String fileName = "cashew-import-template" +
+    String csv = Csv().encode(csvData);
+    String fileName = "clarity-import-template" +
         DateTime.now().millisecondsSinceEpoch.toString() +
         ".csv";
     return saveCSV(boxContext: boxContext, csv: csv, fileName: fileName);

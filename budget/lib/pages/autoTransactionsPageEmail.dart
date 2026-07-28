@@ -25,7 +25,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:budget/functions.dart';
-import 'package:googleapis/gmail/v1.dart' as gMail;
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:html/parser.dart';
 import 'package:notification_listener_service/notification_event.dart';
 import 'package:notification_listener_service/notification_listener_service.dart';
@@ -229,7 +229,7 @@ class _AutoTransactionsPageNotificationsState
           },
           title: "Notification Transactions",
           description:
-              "When a notification is dismissed and the app is open, attempt to add a transaction given its information. Create a template so Cashew understands the format of a notification.",
+              "When a notification is dismissed and the app is open, attempt to add a transaction given its information. Create a template so Clarity understands the format of a notification.",
           initialValue: appStateSettings["notificationScanning"],
         ),
         StreamBuilder<List<ScannerTemplate>>(
@@ -310,9 +310,9 @@ class _AutoTransactionsPageEmailState extends State<AutoTransactionsPageEmail> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () async {
-      if (canReadEmails == true && googleUser == null) {
-        await signInGoogle(
-            context: context, waitForCompletion: true, gMailPermissions: true);
+      if (canReadEmails == true && syncUser == null) {
+        await signInSyncAccount(
+            context: context, waitForCompletion: true, mailPermissions: true);
         updateSettings("AutoTransactions-canReadEmails", true,
             pagesNeedingRefresh: [3], updateGlobalState: false);
         setState(() {});
@@ -347,10 +347,10 @@ class _AutoTransactionsPageEmailState extends State<AutoTransactionsPageEmail> {
         SettingsContainerSwitch(
           onSwitched: (value) async {
             if (value == true) {
-              bool result = await signInGoogle(
+              bool result = await signInSyncAccount(
                   context: context,
                   waitForCompletion: true,
-                  gMailPermissions: true);
+                  mailPermissions: true);
               if (result == false) {
                 return false;
               }
@@ -380,7 +380,7 @@ class _AutoTransactionsPageEmailState extends State<AutoTransactionsPageEmail> {
           child: AnimatedOpacity(
             duration: Duration(milliseconds: 300),
             opacity: canReadEmails ? 1 : 0.4,
-            child: GmailApiScreen(),
+            child: MailScanPreviewScreen(),
           ),
         )
       ],
@@ -404,10 +404,10 @@ Future<void> parseEmailsInBackground(context,
       print("Scanning emails");
 
       bool hasSignedIn = false;
-      if (googleUser == null) {
-        hasSignedIn = await signInGoogle(
+      if (syncUser == null) {
+        hasSignedIn = await signInSyncAccount(
             context: context,
-            gMailPermissions: true,
+            mailPermissions: true,
             waitForCompletion: false,
             silentSignIn: true);
       } else {
@@ -423,11 +423,8 @@ Future<void> parseEmailsInBackground(context,
           appStateSettings["EmailAutoTransactions-amountOfEmails"] ?? 10;
       int newEmailCount = 0;
 
-      final authHeaders = await googleUser!.authHeaders;
-      final authenticateClient = GoogleAuthClient(authHeaders);
-      gMail.GmailApi gmailApi = gMail.GmailApi(authenticateClient);
-      gMail.ListMessagesResponse results = await gmailApi.users.messages
-          .list(googleUser!.id.toString(), maxResults: amountOfEmails);
+      List<MailMessage> results =
+          await mailBackend.listMessages(maxResults: amountOfEmails);
 
       int currentEmailIndex = 0;
 
@@ -447,24 +444,21 @@ Future<void> parseEmailsInBackground(context,
           ),
         );
       }
-      for (gMail.Message message in results.messages!) {
+      for (MailMessage message in results) {
         currentEmailIndex++;
         loadingProgressKey.currentState
             ?.setProgressPercentage(currentEmailIndex / amountOfEmails);
         // await Future.delayed(Duration(milliseconds: 1000));
 
         // Remove this to always parse emails
-        if (emailsParsed.contains(message.id!)) {
+        if (emailsParsed.contains(message.id)) {
           print("Already checked this email!");
           continue;
         }
         newEmailCount++;
 
-        gMail.Message messageData = await gmailApi.users.messages
-            .get(googleUser!.id.toString(), message.id!);
-        DateTime messageDate = DateTime.fromMillisecondsSinceEpoch(
-            int.parse(messageData.internalDate ?? ""));
-        String messageString = getEmailMessage(messageData);
+        DateTime messageDate = message.receivedAt ?? DateTime.now();
+        String messageString = message.body;
         print("Adding transaction based on email");
 
         String? title;
@@ -491,7 +485,7 @@ Future<void> parseEmailsInBackground(context,
         }
 
         if (doesEmailContain == false) {
-          emailsParsed.insert(0, message.id!);
+          emailsParsed.insert(0, message.id);
           continue;
         }
 
@@ -508,7 +502,7 @@ Future<void> parseEmailsInBackground(context,
               },
             ),
           );
-          emailsParsed.insert(0, message.id!);
+          emailsParsed.insert(0, message.id);
           continue;
         } else if (amountDouble == null) {
           openSnackbar(
@@ -524,7 +518,7 @@ Future<void> parseEmailsInBackground(context,
             ),
           );
 
-          emailsParsed.insert(0, message.id!);
+          emailsParsed.insert(0, message.id);
           continue;
         }
 
@@ -564,13 +558,9 @@ Future<void> parseEmailsInBackground(context,
           ),
         );
         // TODO have setting so they can choose if the emails are markes as read
-        gmailApi.users.messages.modify(
-          gMail.ModifyMessageRequest(removeLabelIds: ["UNREAD"]),
-          googleUser!.id,
-          message.id!,
-        );
+        mailBackend.markRead(message.id);
 
-        emailsParsed.insert(0, message.id!);
+        emailsParsed.insert(0, message.id);
       }
       // wait for intro animation to finish
       if (Duration(milliseconds: 2500) > stopwatch.elapsed) {
@@ -594,7 +584,7 @@ Future<void> parseEmailsInBackground(context,
       if (newEmailCount > 0 || sayUpdates == true)
         openSnackbar(
           SnackbarMessage(
-            title: "Scanned " + results.messages!.length.toString() + " emails",
+            title: "Scanned " + results.length.toString() + " emails",
             description: newEmailCount.toString() +
                 pluralString(newEmailCount == 1, " new email"),
             icon: appStateSettings["outlinedIcons"]
@@ -637,19 +627,18 @@ double? getTransactionAmountFromEmail(String messageString,
   return amountDouble;
 }
 
-class GmailApiScreen extends StatefulWidget {
+class MailScanPreviewScreen extends StatefulWidget {
   @override
-  _GmailApiScreenState createState() => _GmailApiScreenState();
+  _MailScanPreviewScreenState createState() => _MailScanPreviewScreenState();
 }
 
-class _GmailApiScreenState extends State<GmailApiScreen> {
+class _MailScanPreviewScreenState extends State<MailScanPreviewScreen> {
   bool loaded = false;
   bool loading = false;
   String error = "";
   int amountOfEmails =
       appStateSettings["EmailAutoTransactions-amountOfEmails"] ?? 10;
 
-  late gMail.GmailApi gmailApi;
   List<String> messagesList = [];
 
   @override
@@ -659,24 +648,17 @@ class _GmailApiScreenState extends State<GmailApiScreen> {
 
   init() async {
     loading = true;
-    if (googleUser != null) {
+    if (syncUser != null) {
       try {
-        final authHeaders = await googleUser!.authHeaders;
-        final authenticateClient = GoogleAuthClient(authHeaders);
-        gMail.GmailApi gmailApi = gMail.GmailApi(authenticateClient);
-        gMail.ListMessagesResponse results = await gmailApi.users.messages
-            .list(googleUser!.id.toString(), maxResults: amountOfEmails);
+        List<MailMessage> results =
+            await mailBackend.listMessages(maxResults: amountOfEmails);
         setState(() {
           loaded = true;
           error = "";
         });
         int currentEmailIndex = 0;
-        for (gMail.Message message in results.messages!) {
-          gMail.Message messageData = await gmailApi.users.messages
-              .get(googleUser!.id.toString(), message.id!);
-          // print(DateTime.fromMillisecondsSinceEpoch(
-          //     int.parse(messageData.internalDate ?? "")));
-          String emailMessageString = getEmailMessage(messageData);
+        for (MailMessage message in results) {
+          String emailMessageString = message.body;
           messagesList.add(emailMessageString);
           currentEmailIndex++;
           loadingProgressKey.currentState
@@ -700,7 +682,7 @@ class _GmailApiScreenState extends State<GmailApiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (googleUser == null) {
+    if (syncUser == null) {
       return SizedBox();
     } else if (error != "" || (loaded == false && loading == false)) {
       init();
@@ -1079,28 +1061,3 @@ class EmailsList extends StatelessWidget {
   }
 }
 
-String getEmailMessage(gMail.Message messageData) {
-  String messageEncoded = messageData.payload?.parts?[0].body?.data ?? "";
-  String messageString;
-  if (messageEncoded == "") {
-    gMail.MessagePart payload = messageData.payload!;
-    try {
-      String htmlString = utf8
-          .decode(payload.body!.dataAsBytes)
-          .replaceAll("[^\\x00-\\x7F]", "");
-      String parsedString = parseHtmlString(htmlString);
-      messageString = parsedString;
-    } catch (e) {
-      messageString = (messageData.snippet ?? "") +
-          "\n\n" +
-          "There was an error getting the rest of the email";
-    }
-  } else {
-    messageString = parseHtmlString(utf8.decode(base64.decode(messageEncoded)));
-  }
-  return messageString
-      .split(RegExp(r"[ \t\r\f\v]+"))
-      .join(" ")
-      .replaceAll(new RegExp(r'(?:[\t ]*(?:\r?\n|\r))+'), '\n\n')
-      .replaceAll(RegExp(r"(?<=\n) +"), "");
-}

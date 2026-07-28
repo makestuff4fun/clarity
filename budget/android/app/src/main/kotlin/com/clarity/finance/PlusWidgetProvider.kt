@@ -1,4 +1,4 @@
-package com.budget.tracker_app
+package com.clarity.finance
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

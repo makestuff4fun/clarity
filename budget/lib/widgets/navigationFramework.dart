@@ -1,4 +1,5 @@
 import 'package:animations/animations.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/colors.dart';
 import 'package:budget/database/initializeDefaultDatabase.dart';
 import 'package:budget/database/tables.dart';
@@ -21,7 +22,6 @@ import 'package:budget/pages/homePage/homePage.dart';
 import 'package:budget/pages/notificationsPage.dart';
 import 'package:budget/pages/objectivesListPage.dart';
 import 'package:budget/pages/onBoardingPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/settingsPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
 import 'package:budget/pages/transactionsListPage.dart';
@@ -71,7 +71,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_lazy_indexed_stack/flutter_lazy_indexed_stack.dart';
-import 'package:googleapis/drive/v3.dart';
 import 'package:provider/provider.dart';
 // import 'package:feature_discovery/feature_discovery.dart';
 
@@ -288,9 +287,8 @@ GlobalKey<ObjectivesListPageState> objectivesListPageStateKey = GlobalKey();
 GlobalKey<UpcomingOverdueTransactionsState>
     upcomingOverdueTransactionsStateKey = GlobalKey();
 GlobalKey<CreditDebtTransactionsState> creditDebtTransactionsKey = GlobalKey();
-GlobalKey<ProductsState> purchasesStateKey = GlobalKey();
 GlobalKey<AccountsPageState> accountsPageStateKey = GlobalKey();
-GlobalKey<GoogleAccountLoginButtonState> settingsGoogleAccountLoginButtonKey =
+GlobalKey<AccountLoginButtonState> settingsAccountLoginButtonKey =
     GlobalKey();
 GlobalKey<NavigationSidebarState> sidebarStateKey = GlobalKey();
 GlobalKey<GlobalLoadingProgressState> loadingProgressKey = GlobalKey();
@@ -329,17 +327,14 @@ Future<bool> runAllCloudFunctions(BuildContext context,
     loadingIndeterminateKey.currentState?.setVisibility(false);
     runningCloudFunctions = false;
     canSyncData = true;
-    if (e is DetailedApiRequestError &&
-            e.status == 401 &&
-            forceSignIn == true ||
-        e is PlatformException) {
+    if (e is PlatformException) {
       // Request had invalid authentication credentials. Try logging out and back in.
       // This stems from silent sign-in not providing the credentials for GDrive API for e.g.
-      await refreshGoogleSignIn();
+      await refreshSyncSignIn();
       runAllCloudFunctions(context);
     } else {
       if (kIsWeb && appStateSettings["webForceLoginPopupOnLaunch"] == true) {
-        signOutGoogle();
+        signOutSyncAccount();
       }
     }
     return false;
@@ -429,8 +424,6 @@ class PageNavigationFrameworkState extends State<PageNavigationFramework> {
       runNotificationPayLoads(context);
       runQuickActionsPayLoads(context);
       initializeLocalizedMonthNames();
-      initializeStoreAndPurchases(
-          context: context, popRouteWithPurchase: false);
 
       if (entireAppLoaded == false) {
         await runAllCloudFunctions(context);
@@ -459,11 +452,11 @@ class PageNavigationFrameworkState extends State<PageNavigationFramework> {
       print("Entire app loaded");
 
       database.watchAllForAutoSync().listen((event) {
-        // Must be logged in to perform an automatic sync - googleUser != null
+        // Must be logged in to perform an automatic sync - syncUser != null
         // If we remove this, it will ask the user to login though - but it can be annoying
         // Users can visually see the last time of sync, especially on web where sign-in is not automatic,
         // so it shouldn't be an issue
-        if (runningCloudFunctions == false && googleUser != null) {
+        if (runningCloudFunctions == false && syncUser != null) {
           createSyncBackup(changeMadeSync: true);
         }
       });

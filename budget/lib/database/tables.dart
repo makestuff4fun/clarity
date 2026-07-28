@@ -4,14 +4,13 @@ import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/objectivesListPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/struct/databaseGlobal.dart';
-import 'package:budget/struct/firebaseAuthGlobal.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/shareBudget.dart';
 import 'package:budget/struct/syncClient.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/periodCyclePicker.dart';
 import 'package:budget/widgets/walletEntry.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import 'package:async/async.dart';
 import 'package:drift/drift.dart';
@@ -361,7 +360,7 @@ class Categories extends Table {
       .nullable()();
 
   // Attributes to configure sharing of transactions:
-  // sharedKey will have the key referencing the entry in the firebase database, if this is null, it is not shared
+  // sharedKey will have the key referencing the entry in the sync backend, if this is null, it is not shared
   // TextColumn get sharedKey => text().nullable()();
   // IntColumn get sharedOwnerMember => intEnum<SharedOwnerMember>().nullable()();
   // DateTimeColumn get sharedDateUpdated => dateTime().nullable()();
@@ -459,7 +458,7 @@ class Budgets extends Table {
       .withDefault(const Constant(null))
       .map(const StringListInColumnConverter())();
   // Attributes to configure sharing of transactions:
-  // sharedKey will have the key referencing the entry in the firebase database, if this is null, it is not shared
+  // sharedKey will have the key referencing the entry in the sync backend, if this is null, it is not shared
   TextColumn get sharedKey => text().nullable()();
   IntColumn get sharedOwnerMember => intEnum<SharedOwnerMember>().nullable()();
   DateTimeColumn get sharedDateUpdated => dateTime().nullable()();
@@ -4235,13 +4234,10 @@ class FinanceDatabase extends _$FinanceDatabase {
     // print(budget);
 
     if (budget.sharedKey != null && updateSharedEntry == true) {
-      FirebaseFirestore? db = await firebaseGetDBInstance();
-      if (db == null) {
+      if (shareBackend.currentUserEmail == null) {
         return -1;
       }
-      DocumentReference collectionRef =
-          db.collection('budgets').doc(budget.sharedKey);
-      collectionRef.update({
+      await shareBackend.updateSharedBudget(budget.sharedKey!, {
         "name": budget.name,
         "amount": budget.amount,
         "colour": budget.colour,

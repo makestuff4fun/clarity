@@ -9,7 +9,6 @@ import 'package:budget/pages/editHomePage.dart';
 import 'package:budget/pages/editObjectivesPage.dart';
 import 'package:budget/pages/homePage/homePageNetWorth.dart';
 import 'package:budget/pages/objectivesListPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionsListPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
 import 'package:budget/struct/currencyFunctions.dart';
@@ -99,25 +98,10 @@ class MoreActionsPageState extends State<MoreActionsPage> {
             showButtons: true,
             keepOutFirst: true,
             items: [
-              if (appStateSettings["showFAQAndHelpLink"] == true)
-                DropdownItemMenu(
-                  id: "open-faq",
-                  label: "faq".tr(),
-                  icon: appStateSettings["outlinedIcons"]
-                      ? Icons.live_help_outlined
-                      : Icons.live_help_rounded,
-                  action: () {
-                    openUrl("https://cashewapp.web.app/faq.html");
-                  },
-                ),
             ],
           ),
         ],
         listWidgets: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(bottom: 8.0),
-            child: PremiumBanner(),
-          ),
           MorePages()
         ],
       );
@@ -182,7 +166,6 @@ class MorePages extends StatelessWidget {
               //     padding: EdgeInsetsDirectional.symmetric(vertical: 5, horizontal: 4),
               //     child: SettingsContainer(
               //       onTap: () {
-              //         openUrl("https://github.com/jameskokoska/Cashew");
               //       },
               //       title: "open-source".tr(),
               //       icon: MoreIcons.github,
@@ -243,8 +226,8 @@ class MorePages extends StatelessWidget {
                       : SizedBox.shrink(),
               if (hasSideNavigation == false)
                 Expanded(
-                    child: GoogleAccountLoginButton(
-                  key: settingsGoogleAccountLoginButtonKey,
+                    child: AccountLoginButton(
+                  key: settingsAccountLoginButtonKey,
                 )),
             ],
           ),
@@ -618,7 +601,7 @@ class SettingsPageContent extends StatelessWidget {
 
         ImportDB(),
 
-        GoogleAccountLoginButton(
+        AccountLoginButton(
           isOutlinedButton: false,
           forceButtonName: "google-drive".tr(),
         ),

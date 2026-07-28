@@ -1,4 +1,5 @@
 import 'package:budget/colors.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/main.dart';
 import 'package:budget/pages/addTransactionPage.dart';
@@ -50,7 +51,9 @@ class AccountsPageState extends State<AccountsPage> {
       ),
       child: Center(
         child: TextFont(
-            text: googleUser?.displayName![0] ?? "",
+            text: (syncUser?.displayName ?? syncUser?.email ?? "").isEmpty
+                ? ""
+                : (syncUser?.displayName ?? syncUser?.email)![0],
             fontSize: 60,
             textAlign: TextAlign.center,
             fontWeight: FontWeight.bold,
@@ -113,7 +116,7 @@ class AccountsPageState extends State<AccountsPage> {
         SliverFillRemaining(
           hasScrollBody: false,
           child: Center(
-            child: googleUser == null
+            child: syncUser == null
                 ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -122,8 +125,8 @@ class AccountsPageState extends State<AccountsPage> {
                             ? "google-drive-backup".tr()
                             : "sign-in-with-google".tr(),
                         icon: getPlatform() == PlatformOS.isIOS
-                            ? MoreIcons.google_drive
-                            : MoreIcons.google,
+                            ? Icons.cloud_rounded
+                            : Icons.account_circle_rounded,
                         isExpanded: false,
                         onTap: () async {
                           await signInAndSync(context, next: () {});
@@ -143,14 +146,14 @@ class AccountsPageState extends State<AccountsPage> {
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                MoreIcons.google_drive,
+                                Icons.cloud_rounded,
                                 size: 50,
                                 color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             )
                           : ClipOval(
-                              child: googleUser == null ||
-                                      googleUser!.photoUrl == null
+                              child: syncUser == null ||
+                                      syncUser!.photoUrl == null
                                   ? profileWidget
                                   : FadeInImage.memoryNetwork(
                                       fadeInDuration:
@@ -158,7 +161,7 @@ class AccountsPageState extends State<AccountsPage> {
                                       fadeOutDuration:
                                           Duration(milliseconds: 100),
                                       placeholder: kTransparentImage,
-                                      image: googleUser!.photoUrl.toString(),
+                                      image: syncUser!.photoUrl.toString(),
                                       height: 95,
                                       width: 95,
                                       imageErrorBuilder: (BuildContext context,
@@ -172,7 +175,7 @@ class AccountsPageState extends State<AccountsPage> {
                       TextFont(
                         text: getPlatform() == PlatformOS.isIOS
                             ? "google-drive-backup".tr()
-                            : (googleUser?.displayName ?? "").toString(),
+                            : (syncUser?.displayName ?? "").toString(),
                         textAlign: TextAlign.center,
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
@@ -189,7 +192,7 @@ class AccountsPageState extends State<AccountsPage> {
                         child: Button(
                           label: "logout".tr(),
                           onTap: () async {
-                            final result = await signOutGoogle();
+                            final result = await signOutSyncAccount();
                             if (result == true) {
                               if (getIsFullScreen(context) == false) {
                                 maybePopRoute(context);
@@ -349,10 +352,7 @@ class AccountsPageState extends State<AccountsPage> {
                                   vertical: 20, horizontal: 7),
                               child: Tappable(
                                 borderRadius: 15,
-                                onTap: () {
-                                  openUrl(
-                                      "https://cashewapp.web.app/policy.html");
-                                },
+                                onTap: () {},
                                 child: Padding(
                                   padding:
                                       const EdgeInsetsDirectional.symmetric(
@@ -456,7 +456,7 @@ class _SignInWithGoogleFlyInState extends State<SignInWithGoogleFlyIn> {
     });
   }
 
-  bool get shouldExpand => !hide && googleUser == null;
+  bool get shouldExpand => !hide && syncUser == null;
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +486,7 @@ class _SignInWithGoogleFlyInState extends State<SignInWithGoogleFlyIn> {
                     ),
                     child: Tappable(
                       onTap: () async {
-                        await signInGoogle();
+                        await signInSyncAccount();
                         setState(() {
                           hide = true;
                         });
@@ -515,7 +515,7 @@ class _SignInWithGoogleFlyInState extends State<SignInWithGoogleFlyIn> {
                                   Row(
                                     children: [
                                       Icon(
-                                        MoreIcons.google,
+                                        Icons.account_circle_rounded,
                                         size: 25,
                                       ),
                                       SizedBox(width: 10),
@@ -562,7 +562,7 @@ class _SignInWithGoogleFlyInState extends State<SignInWithGoogleFlyIn> {
                             child: Button(
                               label: "Continue with Google",
                               onTap: () async {
-                                await signInGoogle();
+                                await signInSyncAccount();
                                 setState(() {
                                   hide = true;
                                 });

@@ -148,11 +148,11 @@ class ExportCSV extends StatelessWidget {
       csvData.add(output.first.keys.toList()); // Add first row headers
       csvData.addAll(output.map((map) => map.values.toList()));
       // print(csvData);
-      String csv = ListToCsvConverter().convert(csvData);
+      String csv = Csv().encode(csvData);
 
       String fileName;
       if (dateTimeRange != null) {
-        fileName = "cashew-" +
+        fileName = "clarity-" +
             (DateTime.now().millisecondsSinceEpoch).toString() +
             "-" +
             dateTimeRange.start.year.toString() +
@@ -169,7 +169,7 @@ class ExportCSV extends StatelessWidget {
             ".csv";
       } else {
         fileName =
-            "cashew-" + cleanFileNameString(DateTime.now().toString()) + ".csv";
+            "clarity-" + cleanFileNameString(DateTime.now().toString()) + ".csv";
       }
 
       await saveCSV(boxContext: boxContext, csv: csv, fileName: fileName);

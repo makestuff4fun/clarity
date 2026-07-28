@@ -181,17 +181,6 @@ class DebugPage extends StatelessWidget {
               : Icons.more_rounded,
         ),
         SettingsContainerSwitch(
-          title: "Show FAQ website buttons".tr(),
-          onSwitched: (value) {
-            updateSettings("showFAQAndHelpLink", value,
-                updateGlobalState: false, pagesNeedingRefresh: [3]);
-          },
-          initialValue: appStateSettings["showFAQAndHelpLink"] == true,
-          icon: appStateSettings["outlinedIcons"]
-              ? Icons.live_help_outlined
-              : Icons.live_help_rounded,
-        ),
-        SettingsContainerSwitch(
           title: "Show extra info text".tr(),
           onSwitched: (value) {
             updateSettings("showExtraInfoText", value,

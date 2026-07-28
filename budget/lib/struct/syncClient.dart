@@ -19,7 +19,7 @@ import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:googleapis/drive/v3.dart' as drive;
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'dart:io';
 
 bool isSyncBackupFile(String? backupFileName) {
@@ -108,9 +108,9 @@ Future<bool> createSyncBackup(
   }
 
   bool hasSignedIn = false;
-  if (googleUser == null) {
-    hasSignedIn = await signInGoogle(
-      gMailPermissions: false,
+  if (syncUser == null) {
+    hasSignedIn = await signInSyncAccount(
+      mailPermissions: false,
       waitForCompletion: false,
       silentSignIn: true,
     );
@@ -123,23 +123,12 @@ Future<bool> createSyncBackup(
     return false;
   }
 
-  final authHeaders = await googleUser!.authHeaders;
-  final authenticateClient = GoogleAuthClient(authHeaders);
-  drive.DriveApi driveApi = drive.DriveApi(authenticateClient);
-  if (driveApi == null) {
-    if (changeMadeSync)
-      loadingIndeterminateKey.currentState?.setVisibility(false);
-    throw "Failed to login to Google Drive";
-  }
+  List<SyncFile> files = await syncBackend.listFiles();
 
-  drive.FileList fileList = await driveApi.files.list(
-      spaces: 'appDataFolder', $fields: 'files(id, name, modifiedTime, size)');
-  List<drive.File>? files = fileList.files;
-
-  for (drive.File file in files ?? []) {
+  for (SyncFile file in files) {
     if (isCurrentDeviceSyncBackupFile(file.name)) {
       try {
-        await deleteBackup(driveApi, file.id ?? "");
+        await deleteBackup(file.id ?? "");
       } catch (e) {
         print(e.toString());
       }
@@ -190,8 +179,8 @@ Future<dynamic> cancelAndPreventSyncOperation() async {
 Future<bool> runForceSignIn(BuildContext context) async {
   if (appStateSettings["forceAutoLogin"] == false) return false;
   if (appStateSettings["hasSignedIn"] == false) return false;
-  return await signInGoogle(
-    gMailPermissions: false,
+  return await signInSyncAccount(
+    mailPermissions: false,
     waitForCompletion: false,
     silentSignIn: true,
     context: context,
@@ -230,9 +219,9 @@ Future<bool> _syncData(BuildContext context) async {
   canSyncData = false;
 
   bool hasSignedIn = false;
-  if (googleUser == null) {
-    hasSignedIn = await signInGoogle(
-      gMailPermissions: false,
+  if (syncUser == null) {
+    hasSignedIn = await signInSyncAccount(
+      mailPermissions: false,
       waitForCompletion: false,
       silentSignIn: true,
     );
@@ -244,25 +233,12 @@ Future<bool> _syncData(BuildContext context) async {
     return false;
   }
 
-  final authHeaders = await googleUser!.authHeaders;
-  final authenticateClient = GoogleAuthClient(authHeaders);
-  drive.DriveApi driveApi = drive.DriveApi(authenticateClient);
-  if (driveApi == null) {
-    throw "Failed to login to Google Drive";
-  }
-
   await createSyncBackup();
 
-  drive.FileList fileList = await driveApi.files.list(
-      spaces: 'appDataFolder', $fields: 'files(id, name, modifiedTime, size)');
-  List<drive.File>? files = fileList.files;
+  List<SyncFile> files = await syncBackend.listFiles();
 
-  if (files == null) {
-    throw "No backups found.";
-  }
-
-  List<drive.File> filesToDownloadSyncChanges = [];
-  for (drive.File file in files) {
+  List<SyncFile> filesToDownloadSyncChanges = [];
+  for (SyncFile file in files) {
     if (isSyncBackupFile(file.name)) {
       filesToDownloadSyncChanges.add(file);
     }
@@ -271,11 +247,11 @@ Future<bool> _syncData(BuildContext context) async {
   print("LOADING SYNC DB");
   DateTime syncStarted = DateTime.now();
   List<SyncLog> syncLogs = [];
-  List<drive.File> filesSyncing = [];
+  List<SyncFile> filesSyncing = [];
 
   int currentFileIndex = 0;
   loadingProgressKey.currentState?.setProgressPercentage(0);
-  for (drive.File file in filesToDownloadSyncChanges) {
+  for (SyncFile file in filesToDownloadSyncChanges) {
     if (requestSyncDataCancel == true) {
       loadingProgressKey.currentState?.setProgressPercentage(0);
       loadingIndeterminateKey.currentState?.setVisibility(false);
@@ -310,12 +286,7 @@ Future<bool> _syncData(BuildContext context) async {
     print("SYNCING WITH " + (file.name ?? ""));
     filesSyncing.add(file);
 
-    List<int> dataStore = [];
-    dynamic response = await driveApi.files
-        .get(fileId, downloadOptions: drive.DownloadOptions.fullMedia);
-    await for (var data in response.stream) {
-      dataStore.insertAll(dataStore.length, data);
-    }
+    List<int> dataStore = await syncBackend.downloadFile(fileId);
 
     FinanceDatabase databaseSync;
 
@@ -516,7 +487,7 @@ Future<bool> _syncData(BuildContext context) async {
   }
 
   await database.processSyncLogs(syncLogs);
-  for (drive.File file in filesSyncing)
+  for (SyncFile file in filesSyncing)
     setDateOfLastSyncedWithClient(getDeviceFromSyncBackupFileName(file.name),
         file.modifiedTime?.toLocal() ?? DateTime(0));
 

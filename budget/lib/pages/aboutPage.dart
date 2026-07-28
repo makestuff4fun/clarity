@@ -43,7 +43,7 @@ class AboutPageState extends State<AboutPage> {
             amountLight: 0.2, amountDark: 0.6)
         : getColor(context, "lightDarkAccent");
 
-    Widget cashewInformation = Wrap(
+    Widget appInformation = Wrap(
       alignment: WrapAlignment.center,
       runAlignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -543,7 +543,7 @@ class AboutPageState extends State<AboutPage> {
                       Flexible(
                         child: Column(
                           children: [
-                            cashewInformation,
+                            appInformation,
                             SizedBox(height: 15),
                             AboutLinks(containerColor: containerColor),
                             HorizontalBreak(
@@ -588,7 +588,7 @@ class AboutPageState extends State<AboutPage> {
               Padding(
                 padding: const EdgeInsetsDirectional.symmetric(
                     horizontal: 15, vertical: 7),
-                child: cashewInformation,
+                child: appInformation,
               ),
               SizedBox(height: 5),
               AboutLinks(containerColor: containerColor),
@@ -854,24 +854,6 @@ class AboutLinks extends StatelessWidget {
           children: [
             _buildTappable(
               context: context,
-              isExternalLink: true,
-              onTap: () => openUrl("https://github.com/jameskokoska/Cashew"),
-              icon: MoreIcons.github,
-              text: "app-is-open-source".tr(namedArgs: {"app": globalAppName}),
-            ),
-            const HorizontalBreak(padding: EdgeInsetsDirectional.zero),
-            _buildTappable(
-              context: context,
-              isExternalLink: true,
-              onTap: () => openUrl("https://cashewapp.web.app/faq.html"),
-              icon: appStateSettings["outlinedIcons"]
-                  ? Icons.live_help_outlined
-                  : Icons.live_help_rounded,
-              text: "guide-and-faq".tr(),
-            ),
-            const HorizontalBreak(padding: EdgeInsetsDirectional.zero),
-            _buildTappable(
-              context: context,
               isExternalLink: false,
               onTap: () =>
                   openBottomSheet(context, RatingPopup(), fullSnap: true),
@@ -899,16 +881,6 @@ class AboutLinks extends StatelessWidget {
                   ? Icons.door_front_door_outlined
                   : Icons.door_front_door_rounded,
               text: "view-app-intro".tr(),
-            ),
-            const HorizontalBreak(padding: EdgeInsetsDirectional.zero),
-            _buildTappable(
-              context: context,
-              isExternalLink: true,
-              onTap: () => openUrl("http://cashewapp.web.app/policy.html"),
-              icon: appStateSettings["outlinedIcons"]
-                  ? Icons.policy_outlined
-                  : Icons.policy_rounded,
-              text: "privacy-policy".tr(),
             ),
             const HorizontalBreak(padding: EdgeInsetsDirectional.zero),
             _buildTappable(
@@ -992,8 +964,6 @@ class AboutDeepLinking extends StatelessWidget {
     return AboutInfoBox(
       title: "deep-linking".tr(),
       showLink: false,
-      link:
-          "https://github.com/jameskokoska/Cashew?tab=readme-ov-file#app-links",
       list: [
         "deep-linking-description".tr(),
       ],

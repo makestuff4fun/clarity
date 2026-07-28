@@ -4,7 +4,6 @@ import 'package:budget/pages/addTransactionPage.dart';
 import 'package:budget/pages/addWalletPage.dart';
 import 'package:budget/pages/editBudgetLimitsPage.dart';
 import 'package:budget/pages/editBudgetPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/settingsPage.dart';
 import 'package:budget/pages/sharedBudgetSettings.dart';
 import 'package:budget/struct/currencyFunctions.dart';
@@ -362,8 +361,7 @@ class _AddBudgetPageState extends State<AddBudgetPage> {
     super.initState();
     Future.delayed(Duration.zero, () async {
       if (widget.budget == null) {
-        bool result = await premiumPopupBudgets(context);
-        if (result == true && widget.isAddedOnlyBudget != true) {
+        if (widget.isAddedOnlyBudget != true) {
           dynamic result = await openBottomSheet(
             context,
             fullSnap: false,

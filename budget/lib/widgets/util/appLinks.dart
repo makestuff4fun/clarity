@@ -350,7 +350,7 @@ Future executeAppLink(BuildContext? context, Uri uri,
       }
       break;
 
-    // Ensures we can see other pages of the Cashew website
+    // Ensures we can see other pages of the app website
     // Such as the FAQ
     // default:
     //   if (context != null)

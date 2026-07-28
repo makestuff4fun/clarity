@@ -1,4 +1,5 @@
 import 'package:budget/colors.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/accountAndBackup.dart';
@@ -16,7 +17,7 @@ bool enableSwipeDownToRefresh(BuildContext context) {
       runningCloudFunctions == false &&
       appStateSettings["hasSignedIn"] != false &&
       appStateSettings["backupSync"] == true &&
-      googleUser != null;
+      syncUser != null;
   // && getIsFullScreen(context) == false;
 }
 

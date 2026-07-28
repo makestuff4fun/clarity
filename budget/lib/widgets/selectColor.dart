@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:budget/colors.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/colorPicker.dart';
@@ -486,8 +485,10 @@ class _ColorIconCustomState extends State<ColorIconCustom> {
     );
     return Tooltip(
       message: "custom-color".tr(),
-      child: LockedFeature(
-        actionAfter: () async {
+      child: Tappable(
+        borderRadius: 20,
+        color: Colors.transparent,
+        onTap: () async {
           await openBottomSheet(context, colorPickerPopup);
         },
         child: Container(

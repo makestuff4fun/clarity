@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:budget/functions.dart';
 import 'package:budget/pages/addTransactionPage.dart';
-import 'package:budget/struct/firebaseAuthGlobal.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
@@ -20,7 +20,6 @@ import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:budget/colors.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 
@@ -99,34 +98,6 @@ class _RatingPopupState extends State<RatingPopup> {
                     }
                   },
                 ),
-                if (appStateSettings["showFAQAndHelpLink"] == true)
-                  HorizontalBreak(
-                    padding: EdgeInsetsDirectional.zero,
-                    color: appStateSettings["materialYou"]
-                        ? dynamicPastel(
-                            context,
-                            Theme.of(context).colorScheme.secondaryContainer,
-                            amount: 0.1,
-                            inverse: true,
-                          )
-                        : getColor(context, "lightDarkAccent"),
-                  ),
-                if (appStateSettings["showFAQAndHelpLink"] == true)
-                  LinkInNotes(
-                    color: (appStateSettings["materialYou"]
-                        ? Theme.of(context).colorScheme.secondaryContainer
-                        : getColor(context, "canvasContainer")),
-                    link: "guide-and-faq".tr(),
-                    iconData: appStateSettings["outlinedIcons"]
-                        ? Icons.live_help_outlined
-                        : Icons.live_help_rounded,
-                    iconDataAfter: appStateSettings["outlinedIcons"]
-                        ? Icons.open_in_new_outlined
-                        : Icons.open_in_new_rounded,
-                    onTap: () async {
-                      openUrl("https://cashewapp.web.app/faq.html");
-                    },
-                  ),
               ],
             ),
           ),
@@ -216,10 +187,6 @@ Future<bool> shareFeedback(String feedbackText, String feedbackType,
   }
 
   try {
-    FirebaseFirestore? db = await firebaseGetDBInstanceAnonymous();
-    if (db == null) {
-      throw ("Can't connect to db");
-    }
     Map<String, dynamic> feedbackEntry = {
       "stars": (selectedStars ?? -1) + 1,
       "feedback": feedbackText,
@@ -230,8 +197,7 @@ Future<bool> shareFeedback(String feedbackText, String feedbackType,
       "appVersion": getVersionString(),
     };
 
-    DocumentReference feedbackCreatedOnCloud =
-        await db.collection("feedback").add(feedbackEntry);
+    await feedbackBackend.submit(feedbackEntry);
 
     openSnackbar(SnackbarMessage(
         title: "feedback-shared".tr(),

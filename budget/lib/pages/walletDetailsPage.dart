@@ -7,7 +7,6 @@ import 'package:budget/pages/creditDebtTransactionsPage.dart';
 import 'package:budget/pages/homePage/homePageLineGraph.dart';
 import 'package:budget/pages/homePage/homePageNetWorth.dart';
 import 'package:budget/pages/pastBudgetsPage.dart';
-import 'package:budget/pages/premiumPage.dart';
 import 'package:budget/pages/transactionFilters.dart';
 import 'package:budget/pages/transactionsSearchPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
@@ -156,7 +155,6 @@ class WalletDetailsPageState extends State<WalletDetailsPage>
       searchFilters = widget.initialSearchFilters;
       selectedDateTimeRange = widget.initialSearchFilters?.dateTimeRange;
     } else if (widget.wallet == null) {
-      allSpendingHistoryDismissedPremium = false;
       searchFilters?.loadFilterString(
         appStateSettings["allSpendingSetFiltersString"],
         skipDateTimeRange: true,
@@ -2167,7 +2165,6 @@ class WalletDetailsLineGraph extends StatelessWidget {
   }
 }
 
-bool allSpendingHistoryDismissedPremium = false;
 
 class AllSpendingPastSpendingGraph extends StatefulWidget {
   const AllSpendingPastSpendingGraph({
@@ -2583,12 +2580,7 @@ class _AllSpendingPastSpendingGraphState
             children: [
               Container(
                 color: Theme.of(context).colorScheme.background,
-                child: FadeOutAndLockFeature(
-                  hasInitiallyDismissed: allSpendingHistoryDismissedPremium,
-                  actionAfter: () {
-                    allSpendingHistoryDismissedPremium = true;
-                  },
-                  child: Stack(
+                child: Stack(
                     children: [
                       Padding(
                         padding: const EdgeInsetsDirectional.symmetric(
@@ -2647,7 +2639,6 @@ class _AllSpendingPastSpendingGraphState
                       ),
                     ],
                   ),
-                ),
               ),
               Transform.translate(
                 offset: Offset(0, -1),
