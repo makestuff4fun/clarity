@@ -1394,6 +1394,8 @@ Future<bool> saveBackupFileToDevice({
 }
 
 bool openBackupReminderPopupCheck(BuildContext context) {
+  // There is nothing to back up to until a sync backend is configured.
+  if (syncBackendConfigured == false) return false;
   if ((appStateSettings["currentUserEmail"] == null ||
           appStateSettings["currentUserEmail"] == "") &&
       ((appStateSettings["numLogins"] + 1) % 7 == 0) &&
