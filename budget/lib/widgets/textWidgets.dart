@@ -67,7 +67,8 @@ class TextFont extends StatelessWidget {
       fontWeight: this.fontWeight,
       fontSize: this.fontSize,
       fontFamily: fallbackFontLocales.contains(appStateSettings["locale"]) &&
-              appStateSettings["font"] == "Avenir"
+              (appStateSettings["font"] == "Avenir" ||
+                  appStateSettings["font"] == "PixelifySans")
           ? "DMSans"
           : appStateSettings["font"],
       fontFamilyFallback: ['Inter'],

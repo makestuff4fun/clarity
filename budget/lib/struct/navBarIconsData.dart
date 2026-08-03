@@ -1,7 +1,6 @@
 import 'package:budget/database/tables.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
-import 'package:budget/widgets/moreIcons.dart';
 import 'package:flutter/material.dart';
 
 class NavBarIconData {
@@ -45,7 +44,7 @@ Map<String, NavBarIconData> getNavBarIconsData() {
     "budgets": NavBarIconData(
       iconData: appStateSettings["outlinedIcons"]
           ? Icons.donut_small_outlined
-          : MoreIcons.chart_pie,
+          : Icons.pie_chart_rounded,
       iconScale: appStateSettings["outlinedIcons"] ? 1 : 0.87,
       iconSize: appStateSettings["outlinedIcons"] ? 24 : 20,
       label: "budgets",
@@ -128,7 +127,7 @@ Map<String, NavBarIconData> getNavBarIconsData() {
     "budgetDetails": NavBarIconData(
       iconData: appStateSettings["outlinedIcons"]
           ? Icons.donut_small_outlined
-          : MoreIcons.chart_pie,
+          : Icons.pie_chart_rounded,
       label: "budgets",
       labelLong: "budgets-details",
       navigationIndexedStackIndex: 10,

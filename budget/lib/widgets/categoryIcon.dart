@@ -9,6 +9,9 @@ import 'package:budget/widgets/tappable.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:flutter/material.dart';
 
+// Share of a chip's padding ring that the artwork is allowed to occupy.
+const double _iconFillOfPadding = 0.5;
+
 class CategoryIcon extends StatelessWidget {
   CategoryIcon({
     Key? key,
@@ -56,6 +59,10 @@ class CategoryIcon extends StatelessWidget {
   final double emojiScale;
 
   Widget categoryIconWidget(context, TransactionCategory? category) {
+    // The chip is sizePadding wider than the icon it holds. Half of that ring
+    // is empty space the artwork can use, which keeps the icon legible at the
+    // sizes it is actually rendered at without changing any chip's footprint.
+    final double drawnIconSize = size + sizePadding * _iconFillOfPadding;
     Widget child = Column(
       children: [
         Stack(
@@ -137,7 +144,7 @@ class CategoryIcon extends StatelessWidget {
                               !tintEnabled
                           ? CacheCategoryIcon(
                               iconName: category.iconName ?? "",
-                              size: size,
+                              size: drawnIconSize,
                             )
                           : ColorFiltered(
                               colorFilter: ColorFilter.mode(
@@ -154,7 +161,7 @@ class CategoryIcon extends StatelessWidget {
                                   opacity: 1,
                                   child: CacheCategoryIcon(
                                     iconName: category.iconName ?? "",
-                                    size: size,
+                                    size: drawnIconSize,
                                   ),
                                 ),
                               ),

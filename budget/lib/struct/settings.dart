@@ -87,6 +87,20 @@ Future<bool> initializeSettings() async {
   await attemptToMigrateSetLongTermLoansAmountTo0();
   attemptToMigrateCustomNumberFormattingSettings();
 
+  // Clarity's retro look: Pixelify Sans font and the purple accent from the
+  // app icon. One-shot migration of settings still carrying Cashew's
+  // defaults, so deliberate choices afterwards stick.
+  if (appStateSettings["migratedToPixelFont"] != true) {
+    if (appStateSettings["font"] == "Avenir") {
+      appStateSettings["font"] = "PixelifySans";
+      await updateSettings("font", "PixelifySans", updateGlobalState: false);
+    }
+    appStateSettings["accentColor"] = toHexString(Color(0xFF433187));
+    await updateSettings("accentColor", toHexString(Color(0xFF433187)),
+        updateGlobalState: false);
+    await updateSettings("migratedToPixelFont", true, updateGlobalState: false);
+  }
+
   // Disable sync every change is not on web
   // It will still sync when user pulls down to refresh
   // if (!kIsWeb) {

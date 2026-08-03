@@ -18,7 +18,6 @@ import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/animatedExpanded.dart';
 import 'package:budget/widgets/editRowEntry.dart';
 import 'package:budget/widgets/listItem.dart';
-import 'package:budget/widgets/moreIcons.dart';
 import 'package:budget/widgets/navigationFramework.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
@@ -119,7 +118,7 @@ class _EditHomePageState extends State<EditHomePage> {
           "budgets": EditHomePageItem(
             icon: appStateSettings["outlinedIcons"]
                 ? Icons.donut_small_outlined
-                : MoreIcons.chart_pie,
+                : Icons.pie_chart_rounded,
             name: "budgets".tr(),
             isEnabled: isHomeScreenSectionEnabled(context, "showPinnedBudgets"),
             onSwitched: (value) {

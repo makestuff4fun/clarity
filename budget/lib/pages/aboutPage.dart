@@ -101,20 +101,6 @@ class AboutPageState extends State<AboutPage> {
       ),
     ];
 
-    List<Widget> graphics = [
-      AboutInfoBox(
-        title: "freepik-credit".tr(),
-        link: "https://www.flaticon.com/authors/freepik",
-      ),
-      AboutInfoBox(
-        title: "font-awesome-credit".tr(),
-        link: "https://fontawesome.com/",
-      ),
-      AboutInfoBox(
-        title: "pch-vector-credit".tr(),
-        link: "https://www.freepik.com/author/pch-vector",
-      ),
-    ];
 
 
 
@@ -158,13 +144,6 @@ class AboutPageState extends State<AboutPage> {
                           children: [
                             for (Widget widget in openSource)
                               Row(children: [Expanded(child: widget)]),
-                            HorizontalBreak(
-                                padding: EdgeInsetsDirectional.symmetric(
-                                    horizontal: 10, vertical: 20)),
-                            for (Widget graphicAcknowledge in graphics)
-                              Row(children: [
-                                Expanded(child: graphicAcknowledge)
-                              ]),
                           ],
                         ),
                       ),
@@ -217,22 +196,6 @@ class AboutPageState extends State<AboutPage> {
                     ],
                   )),
                 ),
-              HorizontalBreak(),
-              SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: 15, vertical: 7),
-                child: Center(
-                  child: TextFont(
-                    text: "graphics".tr(),
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    textAlign: TextAlign.center,
-                    maxLines: 5,
-                  ),
-                ),
-              ),
-              ...graphics,
               SizedBox(height: 15),
             ],
     );

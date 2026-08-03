@@ -11,7 +11,6 @@ import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/button.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
-import 'package:budget/widgets/moreIcons.dart';
 import 'package:budget/widgets/navigationSidebar.dart';
 import 'package:budget/widgets/openBottomSheet.dart';
 import 'package:budget/widgets/openPopup.dart';
@@ -659,7 +658,7 @@ class SelectedTransactionsAppBarMenu extends StatelessWidget {
                             EditSelectedTransactionsContainer(
                               iconData: appStateSettings["outlinedIcons"]
                                   ? Icons.donut_small_outlined
-                                  : MoreIcons.chart_pie,
+                                  : Icons.pie_chart_rounded,
                               iconScale:
                                   appStateSettings["outlinedIcons"] ? 1 : 0.85,
                               text: "add-to-budget".tr(),
@@ -691,7 +690,7 @@ class SelectedTransactionsAppBarMenu extends StatelessWidget {
                                   SnackbarMessage(
                                     icon: appStateSettings["outlinedIcons"]
                                         ? Icons.donut_small_outlined
-                                        : MoreIcons.chart_pie,
+                                        : Icons.pie_chart_rounded,
                                     title: budget == "none"
                                         ? "removed-from-budget".tr()
                                         : "added-to-budget".tr(),

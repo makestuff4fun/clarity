@@ -166,7 +166,7 @@ class MorePages extends StatelessWidget {
               //       onTap: () {
               //       },
               //       title: "open-source".tr(),
-              //       icon: MoreIcons.github,
+              //       icon: Icons.code_rounded,
               //       isOutlined: true,
               //     ),
               //   ),
@@ -1062,6 +1062,7 @@ void openFontPicker(BuildContext context) {
         itemsAreFonts: true,
         items: [
           // These values match that of pubspec font family
+          "PixelifySans",
           "Avenir",
           "DMSans",
           "Metropolis",
@@ -1084,8 +1085,10 @@ void openFontPicker(BuildContext context) {
 }
 
 String fontNameDisplayFilter(String value) {
-  if (value == "Avenir") {
-    return "default".tr().capitalizeFirst;
+  if (value == "PixelifySans") {
+    return "Pixelify" + " (" + "default".tr() + ")";
+  } else if (value == "Avenir") {
+    return "Avenir";
   } else if (value == "(Platform)") {
     return "platform".tr().capitalizeFirst;
   } else if (value == "DMSans") {

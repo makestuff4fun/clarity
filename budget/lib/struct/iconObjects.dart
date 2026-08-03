@@ -4542,4 +4542,812 @@ List<IconForCategory> iconObjects = [
     ],
     mostLikelyCategoryName: "Loan",
   ),
+  IconForCategory(
+    icon: "abacus.png",
+    tags: ["abacus"],
+  ),
+  IconForCategory(
+    icon: "ambulance.png",
+    tags: ["ambulance"],
+  ),
+  IconForCategory(
+    icon: "american-football.png",
+    tags: ["american football", "american", "football"],
+  ),
+  IconForCategory(
+    icon: "aquarium.png",
+    tags: ["aquarium"],
+  ),
+  IconForCategory(
+    icon: "arcade-machine.png",
+    tags: ["arcade machine", "arcade", "machine"],
+  ),
+  IconForCategory(
+    icon: "auction-hammer.png",
+    tags: ["auction hammer", "auction", "hammer"],
+  ),
+  IconForCategory(
+    icon: "baby-rattle.png",
+    tags: ["baby rattle", "baby", "rattle"],
+  ),
+  IconForCategory(
+    icon: "baby-stroller.png",
+    tags: ["baby stroller", "baby", "stroller"],
+  ),
+  IconForCategory(
+    icon: "bagel.png",
+    tags: ["bagel"],
+  ),
+  IconForCategory(
+    icon: "bakery.png",
+    tags: ["bakery"],
+  ),
+  IconForCategory(
+    icon: "balance-scale.png",
+    tags: ["balance scale", "balance", "scale"],
+  ),
+  IconForCategory(
+    icon: "banana.png",
+    tags: ["banana"],
+  ),
+  IconForCategory(
+    icon: "bandage.png",
+    tags: ["bandage"],
+  ),
+  IconForCategory(
+    icon: "basketball.png",
+    tags: ["basketball"],
+  ),
+  IconForCategory(
+    icon: "bathtub.png",
+    tags: ["bathtub"],
+  ),
+  IconForCategory(
+    icon: "bauble.png",
+    tags: ["bauble"],
+  ),
+  IconForCategory(
+    icon: "beach-ball.png",
+    tags: ["beach ball", "beach", "ball"],
+  ),
+  IconForCategory(
+    icon: "bear.png",
+    tags: ["bear"],
+  ),
+  IconForCategory(
+    icon: "beer-mug.png",
+    tags: ["beer mug", "beer", "mug"],
+  ),
+  IconForCategory(
+    icon: "bonsai-tree.png",
+    tags: ["bonsai tree", "bonsai", "tree"],
+  ),
+  IconForCategory(
+    icon: "boxing-glove.png",
+    tags: ["boxing glove", "boxing", "glove"],
+  ),
+  IconForCategory(
+    icon: "building-brick.png",
+    tags: ["building brick", "building", "brick"],
+  ),
+  IconForCategory(
+    icon: "burrito.png",
+    tags: ["burrito"],
+  ),
+  IconForCategory(
+    icon: "camper-van.png",
+    tags: ["camper van", "camper", "van"],
+  ),
+  IconForCategory(
+    icon: "candy-cane.png",
+    tags: ["candy cane", "candy", "cane"],
+  ),
+  IconForCategory(
+    icon: "canoe.png",
+    tags: ["canoe"],
+  ),
+  IconForCategory(
+    icon: "car-wash.png",
+    tags: ["car wash", "car", "wash"],
+  ),
+  IconForCategory(
+    icon: "cargo-ship.png",
+    tags: ["cargo ship", "cargo", "ship"],
+  ),
+  IconForCategory(
+    icon: "carousel.png",
+    tags: ["carousel"],
+  ),
+  IconForCategory(
+    icon: "carrot.png",
+    tags: ["carrot"],
+  ),
+  IconForCategory(
+    icon: "cash-register.png",
+    tags: ["cash register", "cash", "register"],
+  ),
+  IconForCategory(
+    icon: "casino-chip.png",
+    tags: ["casino chip", "casino", "chip"],
+  ),
+  IconForCategory(
+    icon: "champagne.png",
+    tags: ["champagne"],
+  ),
+  IconForCategory(
+    icon: "charity-heart.png",
+    tags: ["charity heart", "charity", "heart"],
+  ),
+  IconForCategory(
+    icon: "cheese.png",
+    tags: ["cheese"],
+  ),
+  IconForCategory(
+    icon: "cheque.png",
+    tags: ["cheque"],
+  ),
+  IconForCategory(
+    icon: "chili-pepper.png",
+    tags: ["chili pepper", "chili", "pepper"],
+  ),
+  IconForCategory(
+    icon: "chocolate-bar.png",
+    tags: ["chocolate bar", "chocolate", "bar"],
+  ),
+  IconForCategory(
+    icon: "cinema.png",
+    tags: ["cinema"],
+  ),
+  IconForCategory(
+    icon: "city-bus.png",
+    tags: ["city bus", "city", "bus"],
+  ),
+  IconForCategory(
+    icon: "clay-pot.png",
+    tags: ["clay pot", "clay", "pot"],
+  ),
+  IconForCategory(
+    icon: "cloud-storage.png",
+    tags: ["cloud storage", "cloud", "storage"],
+  ),
+  IconForCategory(
+    icon: "cocktail.png",
+    tags: ["cocktail"],
+  ),
+  IconForCategory(
+    icon: "coin-purse.png",
+    tags: ["coin purse", "coin", "purse"],
+  ),
+  IconForCategory(
+    icon: "coin-stack.png",
+    tags: ["coin stack", "coin", "stack"],
+  ),
+  IconForCategory(
+    icon: "contactless-payment.png",
+    tags: ["contactless payment", "contactless", "payment"],
+  ),
+  IconForCategory(
+    icon: "corn.png",
+    tags: ["corn"],
+  ),
+  IconForCategory(
+    icon: "crib.png",
+    tags: ["crib"],
+  ),
+  IconForCategory(
+    icon: "croissant.png",
+    tags: ["croissant"],
+  ),
+  IconForCategory(
+    icon: "crutches.png",
+    tags: ["crutches"],
+  ),
+  IconForCategory(
+    icon: "dart-board.png",
+    tags: ["dart board", "dart", "board"],
+  ),
+  IconForCategory(
+    icon: "diner.png",
+    tags: ["diner"],
+  ),
+  IconForCategory(
+    icon: "disco-ball.png",
+    tags: ["disco ball", "disco", "ball"],
+  ),
+  IconForCategory(
+    icon: "dj-turntable.png",
+    tags: ["dj turntable", "dj", "turntable"],
+  ),
+  IconForCategory(
+    icon: "dna.png",
+    tags: ["dna"],
+  ),
+  IconForCategory(
+    icon: "dog-bone.png",
+    tags: ["dog bone", "dog", "bone"],
+  ),
+  IconForCategory(
+    icon: "dominoes.png",
+    tags: ["dominoes"],
+  ),
+  IconForCategory(
+    icon: "donation-box.png",
+    tags: ["donation box", "donation", "box"],
+  ),
+  IconForCategory(
+    icon: "drone.png",
+    tags: ["drone"],
+  ),
+  IconForCategory(
+    icon: "drum.png",
+    tags: ["drum"],
+  ),
+  IconForCategory(
+    icon: "dumbbell.png",
+    tags: ["dumbbell"],
+  ),
+  IconForCategory(
+    icon: "dumplings.png",
+    tags: ["dumplings"],
+  ),
+  IconForCategory(
+    icon: "e-reader.png",
+    tags: ["e reader", "e", "reader"],
+  ),
+  IconForCategory(
+    icon: "easel.png",
+    tags: ["easel"],
+  ),
+  IconForCategory(
+    icon: "easter-bunny.png",
+    tags: ["easter bunny", "easter", "bunny"],
+  ),
+  IconForCategory(
+    icon: "easter-egg.png",
+    tags: ["easter egg", "easter", "egg"],
+  ),
+  IconForCategory(
+    icon: "energy-drink.png",
+    tags: ["energy drink", "energy", "drink"],
+  ),
+  IconForCategory(
+    icon: "ferris-wheel.png",
+    tags: ["ferris wheel", "ferris", "wheel"],
+  ),
+  IconForCategory(
+    icon: "ferry.png",
+    tags: ["ferry"],
+  ),
+  IconForCategory(
+    icon: "film-roll.png",
+    tags: ["film roll", "film", "roll"],
+  ),
+  IconForCategory(
+    icon: "fire-truck.png",
+    tags: ["fire truck", "fire", "truck"],
+  ),
+  IconForCategory(
+    icon: "firework.png",
+    tags: ["firework"],
+  ),
+  IconForCategory(
+    icon: "first-aid-kit.png",
+    tags: ["first aid kit", "first", "aid", "kit"],
+  ),
+  IconForCategory(
+    icon: "food-truck.png",
+    tags: ["food truck", "food", "truck"],
+  ),
+  IconForCategory(
+    icon: "four-leaf-clover.png",
+    tags: ["four leaf clover", "four", "leaf", "clover"],
+  ),
+  IconForCategory(
+    icon: "fox.png",
+    tags: ["fox"],
+  ),
+  IconForCategory(
+    icon: "ghost.png",
+    tags: ["ghost"],
+  ),
+  IconForCategory(
+    icon: "gingerbread-man.png",
+    tags: ["gingerbread man", "gingerbread", "man"],
+  ),
+  IconForCategory(
+    icon: "gold-bar.png",
+    tags: ["gold bar", "gold", "bar"],
+  ),
+  IconForCategory(
+    icon: "grapes.png",
+    tags: ["grapes"],
+  ),
+  IconForCategory(
+    icon: "hedgehog.png",
+    tags: ["hedgehog"],
+  ),
+  IconForCategory(
+    icon: "honey-jar.png",
+    tags: ["honey jar", "honey", "jar"],
+  ),
+  IconForCategory(
+    icon: "hospital.png",
+    tags: ["hospital"],
+  ),
+  IconForCategory(
+    icon: "hot-air-balloon.png",
+    tags: ["hot air balloon", "hot", "air", "balloon"],
+  ),
+  IconForCategory(
+    icon: "hot-dog.png",
+    tags: ["hot dog", "hot", "dog"],
+  ),
+  IconForCategory(
+    icon: "hotel.png",
+    tags: ["hotel"],
+  ),
+  IconForCategory(
+    icon: "house-key.png",
+    tags: ["house key", "house", "key"],
+  ),
+  IconForCategory(
+    icon: "ice-skate.png",
+    tags: ["ice skate", "ice", "skate"],
+  ),
+  IconForCategory(
+    icon: "insurance-shield.png",
+    tags: ["insurance shield", "insurance", "shield"],
+  ),
+  IconForCategory(
+    icon: "island.png",
+    tags: ["island"],
+  ),
+  IconForCategory(
+    icon: "jet-ski.png",
+    tags: ["jet ski", "jet", "ski"],
+  ),
+  IconForCategory(
+    icon: "kebab.png",
+    tags: ["kebab"],
+  ),
+  IconForCategory(
+    icon: "kettle.png",
+    tags: ["kettle"],
+  ),
+  IconForCategory(
+    icon: "kick-scooter.png",
+    tags: ["kick scooter", "kick", "scooter"],
+  ),
+  IconForCategory(
+    icon: "ladder.png",
+    tags: ["ladder"],
+  ),
+  IconForCategory(
+    icon: "lamp.png",
+    tags: ["lamp"],
+  ),
+  IconForCategory(
+    icon: "laundry-basket.png",
+    tags: ["laundry basket", "laundry", "basket"],
+  ),
+  IconForCategory(
+    icon: "lawn-mower.png",
+    tags: ["lawn mower", "lawn", "mower"],
+  ),
+  IconForCategory(
+    icon: "lemon.png",
+    tags: ["lemon"],
+  ),
+  IconForCategory(
+    icon: "library.png",
+    tags: ["library"],
+  ),
+  IconForCategory(
+    icon: "lotus.png",
+    tags: ["lotus"],
+  ),
+  IconForCategory(
+    icon: "love-letter.png",
+    tags: ["love letter", "love", "letter"],
+  ),
+  IconForCategory(
+    icon: "magazine.png",
+    tags: ["magazine"],
+  ),
+  IconForCategory(
+    icon: "mailbox.png",
+    tags: ["mailbox"],
+  ),
+  IconForCategory(
+    icon: "meal-kit-box.png",
+    tags: ["meal kit box", "meal", "kit", "box"],
+  ),
+  IconForCategory(
+    icon: "medal.png",
+    tags: ["medal"],
+  ),
+  IconForCategory(
+    icon: "membership-card.png",
+    tags: ["membership card", "membership", "card"],
+  ),
+  IconForCategory(
+    icon: "menorah.png",
+    tags: ["menorah"],
+  ),
+  IconForCategory(
+    icon: "metal-detector.png",
+    tags: ["metal detector", "metal", "detector"],
+  ),
+  IconForCategory(
+    icon: "microscope.png",
+    tags: ["microscope"],
+  ),
+  IconForCategory(
+    icon: "milkshake.png",
+    tags: ["milkshake"],
+  ),
+  IconForCategory(
+    icon: "money-clip.png",
+    tags: ["money clip", "money", "clip"],
+  ),
+  IconForCategory(
+    icon: "mortgage.png",
+    tags: ["mortgage"],
+  ),
+  IconForCategory(
+    icon: "mountain.png",
+    tags: ["mountain"],
+  ),
+  IconForCategory(
+    icon: "moving-truck.png",
+    tags: ["moving truck", "moving", "truck"],
+  ),
+  IconForCategory(
+    icon: "museum.png",
+    tags: ["museum"],
+  ),
+  IconForCategory(
+    icon: "mushroom.png",
+    tags: ["mushroom"],
+  ),
+  IconForCategory(
+    icon: "nail-polish.png",
+    tags: ["nail polish", "nail", "polish"],
+  ),
+  IconForCategory(
+    icon: "newspaper.png",
+    tags: ["newspaper"],
+  ),
+  IconForCategory(
+    icon: "octopus.png",
+    tags: ["octopus"],
+  ),
+  IconForCategory(
+    icon: "origami-crane.png",
+    tags: ["origami crane", "origami", "crane"],
+  ),
+  IconForCategory(
+    icon: "owl.png",
+    tags: ["owl"],
+  ),
+  IconForCategory(
+    icon: "paintbrush.png",
+    tags: ["paintbrush"],
+  ),
+  IconForCategory(
+    icon: "pancakes.png",
+    tags: ["pancakes"],
+  ),
+  IconForCategory(
+    icon: "parrot.png",
+    tags: ["parrot"],
+  ),
+  IconForCategory(
+    icon: "passport.png",
+    tags: ["passport"],
+  ),
+  IconForCategory(
+    icon: "payday.png",
+    tags: ["payday"],
+  ),
+  IconForCategory(
+    icon: "penguin.png",
+    tags: ["penguin"],
+  ),
+  IconForCategory(
+    icon: "pension.png",
+    tags: ["pension"],
+  ),
+  IconForCategory(
+    icon: "pet-carrier.png",
+    tags: ["pet carrier", "pet", "carrier"],
+  ),
+  IconForCategory(
+    icon: "pharmacy.png",
+    tags: ["pharmacy"],
+  ),
+  IconForCategory(
+    icon: "photo-album.png",
+    tags: ["photo album", "photo", "album"],
+  ),
+  IconForCategory(
+    icon: "pie.png",
+    tags: ["pie"],
+  ),
+  IconForCategory(
+    icon: "pinata.png",
+    tags: ["pinata"],
+  ),
+  IconForCategory(
+    icon: "pineapple.png",
+    tags: ["pineapple"],
+  ),
+  IconForCategory(
+    icon: "play-button.png",
+    tags: ["play button", "play", "button"],
+  ),
+  IconForCategory(
+    icon: "podcast.png",
+    tags: ["podcast"],
+  ),
+  IconForCategory(
+    icon: "police-car.png",
+    tags: ["police car", "police", "car"],
+  ),
+  IconForCategory(
+    icon: "pretzel.png",
+    tags: ["pretzel"],
+  ),
+  IconForCategory(
+    icon: "puzzle-piece.png",
+    tags: ["puzzle piece", "puzzle", "piece"],
+  ),
+  IconForCategory(
+    icon: "rabbit.png",
+    tags: ["rabbit"],
+  ),
+  IconForCategory(
+    icon: "refrigerator.png",
+    tags: ["refrigerator"],
+  ),
+  IconForCategory(
+    icon: "rocket.png",
+    tags: ["rocket"],
+  ),
+  IconForCategory(
+    icon: "rocking-chair.png",
+    tags: ["rocking chair", "rocking", "chair"],
+  ),
+  IconForCategory(
+    icon: "roller-coaster.png",
+    tags: ["roller coaster", "roller", "coaster"],
+  ),
+  IconForCategory(
+    icon: "roller-skate.png",
+    tags: ["roller skate", "roller", "skate"],
+  ),
+  IconForCategory(
+    icon: "rugby-ball.png",
+    tags: ["rugby ball", "rugby", "ball"],
+  ),
+  IconForCategory(
+    icon: "sailboat.png",
+    tags: ["sailboat"],
+  ),
+  IconForCategory(
+    icon: "salary-bag.png",
+    tags: ["salary bag", "salary", "bag"],
+  ),
+  IconForCategory(
+    icon: "satellite-dish.png",
+    tags: ["satellite dish", "satellite", "dish"],
+  ),
+  IconForCategory(
+    icon: "savings-jar.png",
+    tags: ["savings jar", "savings", "jar"],
+  ),
+  IconForCategory(
+    icon: "saxophone.png",
+    tags: ["saxophone"],
+  ),
+  IconForCategory(
+    icon: "shuttlecock.png",
+    tags: ["shuttlecock"],
+  ),
+  IconForCategory(
+    icon: "skateboard.png",
+    tags: ["skateboard"],
+  ),
+  IconForCategory(
+    icon: "ski.png",
+    tags: ["ski"],
+  ),
+  IconForCategory(
+    icon: "sleeping-bag.png",
+    tags: ["sleeping bag", "sleeping", "bag"],
+  ),
+  IconForCategory(
+    icon: "smoothie.png",
+    tags: ["smoothie"],
+  ),
+  IconForCategory(
+    icon: "snow-globe.png",
+    tags: ["snow globe", "snow", "globe"],
+  ),
+  IconForCategory(
+    icon: "snowflake.png",
+    tags: ["snowflake"],
+  ),
+  IconForCategory(
+    icon: "sofa.png",
+    tags: ["sofa"],
+  ),
+  IconForCategory(
+    icon: "solar-panel.png",
+    tags: ["solar panel", "solar", "panel"],
+  ),
+  IconForCategory(
+    icon: "soup-bowl.png",
+    tags: ["soup bowl", "soup", "bowl"],
+  ),
+  IconForCategory(
+    icon: "spa.png",
+    tags: ["spa"],
+  ),
+  IconForCategory(
+    icon: "stadium.png",
+    tags: ["stadium"],
+  ),
+  IconForCategory(
+    icon: "stethoscope.png",
+    tags: ["stethoscope"],
+  ),
+  IconForCategory(
+    icon: "stopwatch.png",
+    tags: ["stopwatch"],
+  ),
+  IconForCategory(
+    icon: "strawberry.png",
+    tags: ["strawberry"],
+  ),
+  IconForCategory(
+    icon: "suitcase.png",
+    tags: ["suitcase"],
+  ),
+  IconForCategory(
+    icon: "sunscreen.png",
+    tags: ["sunscreen"],
+  ),
+  IconForCategory(
+    icon: "supermarket.png",
+    tags: ["supermarket"],
+  ),
+  IconForCategory(
+    icon: "surfboard.png",
+    tags: ["surfboard"],
+  ),
+  IconForCategory(
+    icon: "swimming-pool.png",
+    tags: ["swimming pool", "swimming", "pool"],
+  ),
+  IconForCategory(
+    icon: "syringe.png",
+    tags: ["syringe"],
+  ),
+  IconForCategory(
+    icon: "tax-form.png",
+    tags: ["tax form", "tax", "form"],
+  ),
+  IconForCategory(
+    icon: "teapot.png",
+    tags: ["teapot"],
+  ),
+  IconForCategory(
+    icon: "tennis-racket.png",
+    tags: ["tennis racket", "tennis", "racket"],
+  ),
+  IconForCategory(
+    icon: "tent.png",
+    tags: ["tent"],
+  ),
+  IconForCategory(
+    icon: "thermometer.png",
+    tags: ["thermometer"],
+  ),
+  IconForCategory(
+    icon: "tip-jar.png",
+    tags: ["tip jar", "tip", "jar"],
+  ),
+  IconForCategory(
+    icon: "toaster.png",
+    tags: ["toaster"],
+  ),
+  IconForCategory(
+    icon: "toolbox.png",
+    tags: ["toolbox"],
+  ),
+  IconForCategory(
+    icon: "tooth-brush.png",
+    tags: ["tooth brush", "tooth", "brush"],
+  ),
+  IconForCategory(
+    icon: "tow-truck.png",
+    tags: ["tow truck", "tow", "truck"],
+  ),
+  IconForCategory(
+    icon: "tractor.png",
+    tags: ["tractor"],
+  ),
+  IconForCategory(
+    icon: "treasure-chest.png",
+    tags: ["treasure chest", "treasure", "chest"],
+  ),
+  IconForCategory(
+    icon: "trumpet.png",
+    tags: ["trumpet"],
+  ),
+  IconForCategory(
+    icon: "turkey-dinner.png",
+    tags: ["turkey dinner", "turkey", "dinner"],
+  ),
+  IconForCategory(
+    icon: "turtle.png",
+    tags: ["turtle"],
+  ),
+  IconForCategory(
+    icon: "vacuum-cleaner.png",
+    tags: ["vacuum cleaner", "vacuum", "cleaner"],
+  ),
+  IconForCategory(
+    icon: "vault-door.png",
+    tags: ["vault door", "vault", "door"],
+  ),
+  IconForCategory(
+    icon: "vet-clinic.png",
+    tags: ["vet clinic", "vet", "clinic"],
+  ),
+  IconForCategory(
+    icon: "vinyl-record.png",
+    tags: ["vinyl record", "vinyl", "record"],
+  ),
+  IconForCategory(
+    icon: "violin.png",
+    tags: ["violin"],
+  ),
+  IconForCategory(
+    icon: "volleyball.png",
+    tags: ["volleyball"],
+  ),
+  IconForCategory(
+    icon: "waffle.png",
+    tags: ["waffle"],
+  ),
+  IconForCategory(
+    icon: "waterfall.png",
+    tags: ["waterfall"],
+  ),
+  IconForCategory(
+    icon: "watermelon.png",
+    tags: ["watermelon"],
+  ),
+  IconForCategory(
+    icon: "wedding-rings.png",
+    tags: ["wedding rings", "wedding", "rings"],
+  ),
+  IconForCategory(
+    icon: "whale.png",
+    tags: ["whale"],
+  ),
+  IconForCategory(
+    icon: "wheelchair.png",
+    tags: ["wheelchair"],
+  ),
+  IconForCategory(
+    icon: "wine-bottle.png",
+    tags: ["wine bottle", "wine", "bottle"],
+  ),
+  IconForCategory(
+    icon: "yoga-mat.png",
+    tags: ["yoga mat", "yoga", "mat"],
+  ),
 ];
