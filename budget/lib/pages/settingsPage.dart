@@ -1062,12 +1062,12 @@ void openFontPicker(BuildContext context) {
         itemsAreFonts: true,
         items: [
           // These values match that of pubspec font family
-          "PixelifySans",
-          "Avenir",
+          // Inter is also the font family fallback
+          "Inter",
           "DMSans",
+          "Avenir",
           "Metropolis",
           // SF Pro removed - users on iOS can just select Platform font
-          // Inter is the font family fallback
           "RobotoCondensed",
           "Inconsolata",
           "(Platform)",
@@ -1085,8 +1085,8 @@ void openFontPicker(BuildContext context) {
 }
 
 String fontNameDisplayFilter(String value) {
-  if (value == "PixelifySans") {
-    return "Pixelify" + " (" + "default".tr() + ")";
+  if (value == "Inter") {
+    return "Inter" + " (" + "default".tr() + ")";
   } else if (value == "Avenir") {
     return "Avenir";
   } else if (value == "(Platform)") {

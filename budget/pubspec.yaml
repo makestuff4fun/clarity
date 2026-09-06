@@ -177,11 +177,6 @@ flutter:
   # see https://flutter.dev/custom-fonts/#from-packages
 
   fonts:
-    - family: PixelifySans
-      fonts:
-        - asset: assets/fonts/PixelifySans-Regular.ttf
-        - asset: assets/fonts/PixelifySans-Bold.ttf
-          weight: 700
     - family: Avenir
       fonts:
         - asset: assets/fonts/AvenirLTStd-Roman.otf

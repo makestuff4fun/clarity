@@ -170,7 +170,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "allSpendingSummaryAllWallets": true,
     "showPastSpendingTrajectory": false,
     "lastSynced": null,
-    "font": "PixelifySans",
+    "font": "Inter",
     "forceSmallHeader": false,
     "animationSpeed": 1.0,
     "logging": false,
