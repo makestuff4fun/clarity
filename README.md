@@ -120,6 +120,33 @@ local database export/import — works fully offline with no backend at all.
 
 ---
 
+## Look and feel
+
+**Typography.** The default font is **Inter**. It replaced Pixelify Sans, the
+pixel display face the retro reskin had made the app-wide default — at the
+12–16px the transaction list, amounts and settings rows actually run at, its
+square pixels close the counters and it stops being readable. Inter was already
+bundled and already the `fontFamilyFallback` behind every `TextFont`, so the
+change added no assets. Existing installs are moved by the one-shot
+`migratedOffPixelFont` migration in `budget/lib/struct/settings.dart`; the
+accent colour (`#433187`, from the app icon) is unrelated and stays.
+
+**Icons.** `budget/assets/categories/` holds **479** category icons at 128×128
+RGBA, referenced from the database by filename — a category's `iconName` is a
+stored filename, so replacing the artwork must preserve the names or existing
+users lose their icons. `budget/lib/struct/iconObjects.dart` carries the search
+tags for all 479. `budget/tool/process_pixel_art.py` is the knockout-and-resize
+pipeline that produced the current set, and it also enumerates every other
+artwork slot (landing, empty states, Android widget art, quick actions,
+notification silhouettes).
+
+The current pixel-art set is being replaced. **The constraint that governs the
+job**: these are drawn at roughly 20–40px inside a coloured chip, so legibility
+at chip size is the acceptance test, not appearance at 128px. See `CONTEXT.md`
+for where that work stands.
+
+---
+
 ## Building
 
 ```bash
