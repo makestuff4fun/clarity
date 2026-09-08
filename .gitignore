@@ -4,3 +4,4 @@
 # Personal data — never commit real backups
 cashew-db-*.sql
 *.sqlite
+.agent_shutdown
