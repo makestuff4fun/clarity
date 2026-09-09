@@ -80,16 +80,35 @@ not yet answered.** Read the sink directly rather than trusting a relay:
   *"Clarity is private, ships nowhere"* — so dev is unconstrained. Strike this
   from any future trade-off; it was the only non-quality argument for schnell.
 
-⚠️ **2026-09-09, do not misread this as an answer.** Brian commented
-"iconset design gets rid of some shadows and svg looks good" on
-`decisions/hyperdetailed-look` — an **images-session** page slug, not a Clarity
-one. It was relayed to this session as endorsement of the vector proposal. It
-probably is not: `clarity-approach-vector` has sat empty since 2026-09-06 and
-that comment is three days later on someone else's page. Unconfirmed by Brian.
-Also note his "Vector game icons are all awful. No use" is about the images
-session's exp-0025 — a *diffusion model imitating a vector look*, which is a
-different thing from Clarity's proposal of a *drawn* SVG library. Do not let the
-two be conflated into a ruling he never made.
+⚠️ **2026-09-09 — a ruling relayed here as ours that is NOT ours. Resolved.**
+Brian's "iconset design gets rid of some shadows and svg looks good / Vector game
+icons are all awful. No use" was passed to this session as endorsement of the
+vector proposal. **It is not about Clarity at all** — confirmed by the peer after
+checking: both slugs sit on the images session's own `/inbox-tests/` page, and
+the comment answers two of four workflow tests Brian sent *them*.
+
+The method that caught it is the one to repeat: **query your own boxes.**
+`clarity-approach-vector` was empty three days after it existed, which is
+evidence; inferring from someone else's page is not. `decisions/<slug>` is the
+sink's namespace, not a served path, so a slug alone never tells you whose page
+it came from.
+
+Two things to carry forward from it:
+
+- **"Vector" names two opposite things and they must not be merged.** What Brian
+  killed is a *diffusion model imitating a vector look* (their exp-0025, an
+  Illustrious LoRA whose measured defect is painting its own background and
+  losing the subject — wrong for a cut-out set by construction). Clarity's
+  proposal is a *drawn* SVG library with one stroke weight because a person
+  chose it. They share only the word. The peer has written that boundary into
+  exp-0025's own record so it travels with the row.
+- **Tracing raster to SVG does not rescue 24px** — measured by the images
+  session on their vectorise tail: crisp above ~32px, files 10–40× smaller, no
+  GPU, *and it fails below that*. Structural, not tunable: there is no stroke
+  weight to recover from a raster, only an edge to approximate. So the obvious
+  middle path — "render with flux, then trace it to SVG" — is already refuted at
+  Clarity's grid size. A drawn library is crisp at 24px because someone chose
+  the weight at 24px.
 
 ### The live question — HOLD
 
