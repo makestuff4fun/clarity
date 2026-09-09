@@ -55,7 +55,12 @@ Two traps, both hit:
   be verified from red: the files are on disk under the served root, every
   `<img src>` resolves, and the comment sink answers 200 on `127.0.0.1:8790`.
 
-Every item on the page carries its own comment box (fleet standard). Brian's
+Every item on the page carries its own comment box (fleet standard). Sharper
+form of the same rule, from hanquest-images-21 on 2026-09-09: **separate PAGES,
+not just separate boxes, when two teams' work would otherwise share one.** His
+verdicts split cleanly when things are presented apart; batched into one "how's
+the icon work looking?" they get a single verdict applied to both, pulled in the
+direction of the worse item. Brian's
 comments arrive as `decisions-clarity-*` and are **relayed by images-monitor**;
 they land in `hanquest-images/requests/` because `comment-server.py` has no
 `clarity` slot. Adding one is a the-den change needing Brian's ask — **offered,
@@ -74,6 +79,17 @@ not yet answered.** Read the sink directly rather than trusting a relay:
 - **The licence question is dead.** flux1-dev is BFL Non-Commercial, but
   *"Clarity is private, ships nowhere"* — so dev is unconstrained. Strike this
   from any future trade-off; it was the only non-quality argument for schnell.
+
+⚠️ **2026-09-09, do not misread this as an answer.** Brian commented
+"iconset design gets rid of some shadows and svg looks good" on
+`decisions/hyperdetailed-look` — an **images-session** page slug, not a Clarity
+one. It was relayed to this session as endorsement of the vector proposal. It
+probably is not: `clarity-approach-vector` has sat empty since 2026-09-06 and
+that comment is three days later on someone else's page. Unconfirmed by Brian.
+Also note his "Vector game icons are all awful. No use" is about the images
+session's exp-0025 — a *diffusion model imitating a vector look*, which is a
+different thing from Clarity's proposal of a *drawn* SVG library. Do not let the
+two be conflated into a ruling he never made.
 
 ### The live question — HOLD
 
