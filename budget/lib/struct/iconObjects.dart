@@ -9,22 +9,6 @@ class IconForCategory {
 
 List<IconForCategory> iconObjects = [
   IconForCategory(
-    icon: "air-hockey.png",
-    tags: [
-      "air hockey",
-      "fun",
-      "game",
-      "table",
-      "sport",
-      "competition",
-      "puck",
-      "stick",
-      "arcade",
-      "entertainment"
-    ],
-    mostLikelyCategoryName: "Entertainment",
-  ),
-  IconForCategory(
     icon: "anchor.png",
     tags: [
       "anchor",
@@ -5081,6 +5065,24 @@ List<IconForCategory> iconObjects = [
   IconForCategory(
     icon: "pineapple.png",
     tags: ["pineapple"],
+  ),
+  IconForCategory(
+    icon: "ping-pong.png",
+    tags: [
+      "ping pong",
+      "table tennis",
+      "fun",
+      "game",
+      "table",
+      "sport",
+      "competition",
+      "paddle",
+      "bat",
+      "ball",
+      "arcade",
+      "entertainment"
+    ],
+    mostLikelyCategoryName: "Entertainment",
   ),
   IconForCategory(
     icon: "play-button.png",
