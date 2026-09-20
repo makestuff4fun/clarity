@@ -8,9 +8,10 @@ It is a **snapshot, not a log** — rewrite it rather than appending.
 judge nothing has changed.** The harness uses its **mtime** as the completion
 signal; a `.agent_shutdown` marker alone is read as a claim, not as done. An
 earlier version of this very paragraph said the opposite — "if HEAD is unchanged,
-leave it alone" — which was wrong, and left six trims looking unfinished. Preserve
-the content faithfully when you rewrite; the risk of a reword dropping something
-deliberate is real, but it is smaller than the risk of the trim not registering.
+leave it alone" — which was wrong, and left six consecutive trims looking
+unfinished. Preserve the content faithfully when you rewrite: the risk of a
+reword quietly dropping something deliberate is real, but it is smaller than the
+risk of the trim never registering.
 
 There is no project `CLAUDE.md` and Brian has said not to assume one. Fleet-wide
 rules are in `~/.claude/CLAUDE.md`; cross-session environment quirks live in the
@@ -44,15 +45,20 @@ scope it was the wrong call. If he does ask, the step is: brief the images
 session against the slot table below, using `budget/tool/process_pixel_art.py`
 as the map of which source image feeds which slot.
 
-### Nothing is currently blocked on Brian
+### Three decisions of his that are open, none of them blocking
 
-Two questions were open a long time and are now moot. If either resurfaces: the
-FLUX.1-dev licence does **not** matter (*"Clarity is private, ships nowhere"*),
-and the vector/SVG proposal was never ruled on because it was never needed.
+- The three commits this session left in **hanquest-images** (`5a6bada9`,
+  `057af2f8`, `13c32f57` on `red-dev`) — stay, be reverted, or the generator
+  moves into `budget/tool/`. He objected to them being made; he has not said
+  what to do with them.
+- Whether to add a **`clarity` slot** to `comment-server.py`. Without one his
+  feedback on Clarity pages lands in `hanquest-images/requests/`. It is a
+  `the-den` change and needs his ask.
+- Whether the remaining artwork gets redone at all.
 
-One he never answered, now with no deadline: **there is no `clarity` slot in
-`comment-server.py`**, so his feedback on Clarity pages lands in
-`hanquest-images/requests/`. Adding one is a `the-den` change that needs his ask.
+Two older questions are now moot. If either resurfaces: the FLUX.1-dev licence
+does **not** matter (*"Clarity is private, ships nowhere"*), and the vector/SVG
+proposal was never ruled on because it was never needed.
 
 ---
 
@@ -139,10 +145,8 @@ content is the historical icon A/B; the mechanism is what to reuse.
 - Every item on a review page gets **its own comment box** (fleet standard), and
   **separate pages** when two teams' work would otherwise share one — batched
   asks get a single verdict pulled toward the worse item.
-- ⚠️ Brian objected to this session committing into **hanquest-images**; three
-  commits are still there (`5a6bada9`, `057af2f8`, `13c32f57` on `red-dev`).
-  Whether they stay, are reverted, or the generator moves to `budget/tool/` is
-  an open decision of his. **Do not commit there again without him saying so.**
+- ⚠️ Brian objected to this session committing into **hanquest-images**. **Do not
+  commit there again without him saying so.**
 - That slot is shared. Never `rsync --delete` into `/srv/www/images/`.
 
 ---
@@ -241,3 +245,7 @@ What it needed was people iterating on it.
 - `budget/android/build/` and `budget/android/.gradle/` are now gitignored; the
   existing `/build/` rule is anchored to the Flutter project root and misses
   them, so a 200 MB Gradle tree was sitting untracked and stageable.
+- **Anything of value living in a session scratchpad will be lost.** Both
+  `deploy_icons.py` and `publish_review_page.py` were written to
+  `/tmp/claude-.../scratchpad/` and only made it into `budget/tool/` because
+  someone noticed. Write tools into the repo as you go.
