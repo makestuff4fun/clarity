@@ -4,6 +4,13 @@ Durable project facts live in `README.md`. This file is the live working
 context: what is in flight, what was decided, and what is waiting on Brian.
 It is a **snapshot, not a log** — rewrite it rather than appending.
 
+⚠️ **If you have just been told to do a context trim: this file is already
+current.** Several consecutive trims have run with no work between them and
+found nothing to add. Check `git log` and `git status` first — if HEAD is
+unchanged and the tree is clean, nothing has happened since this was written,
+and the correct action is to leave it alone rather than reword it. Rewriting a
+settled snapshot only risks losing detail that was put there deliberately.
+
 There is no project `CLAUDE.md` and Brian has said not to assume one. Fleet-wide
 rules are in `~/.claude/CLAUDE.md`; cross-session environment quirks live in the
 auto-memory (`bairui-environment.md`).
