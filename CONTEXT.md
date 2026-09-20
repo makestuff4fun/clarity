@@ -27,6 +27,15 @@ icons**.
 Everything is committed and pushed; the working tree is clean and nothing is
 running.
 
+### Next concrete step: none in flight — wait for Brian
+
+Both things he asked for are delivered and verified. **Do not start the
+remaining artwork on your own initiative**; he has not asked for it since the
+category icons landed, and the last time this session moved ahead of him on
+scope it was the wrong call. If he does ask, the step is: brief the images
+session against the slot table below, using `budget/tool/process_pixel_art.py`
+as the map of which source image feeds which slot.
+
 ### Nothing is currently blocked on Brian
 
 Two questions were open a long time and are now moot. If either resurfaces: the
