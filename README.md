@@ -161,7 +161,13 @@ flutter build apk          # Android
 flutter build web          # Web
 ```
 
-Requires Flutter 3.41+ and JDK 17+.
+Requires Flutter 3.41+ and JDK 17+. Built and verified on Flutter 3.47.5 /
+Dart 3.13.4 with JDK 21, against Android SDK 36.
+
+The Android toolchain floors are set by Flutter, not by this project: 3.47.5
+requires Gradle ≥ 8.14.0, AGP ≥ 8.11.1 and Kotlin ≥ 2.2.20, and refuses to build
+below any of them. Those are the versions pinned in `android/settings.gradle`
+and `android/gradle/wrapper/gradle-wrapper.properties`.
 
 Release Android builds are signed from `android/key.properties` if present, and
 fall back to the debug key otherwise.

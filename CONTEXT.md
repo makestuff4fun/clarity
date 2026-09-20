@@ -14,9 +14,28 @@ icons**.
 
 **Font — DONE**, commit `34be351`. Inter is the default; Pixelify Sans, its two
 TTFs and its bundled OFL are gone. See README, *Look and feel*.
-⚠️ **Not build-verified. Flutter is not installed on red**, so nothing Dart can
-be compiled or analysed on this box — `flutter analyze` and `flutter test` need
-another machine. Say that rather than implying the change was checked.
+~~Not build-verified. Flutter is not installed on red.~~ **Corrected
+2026-09-20: Flutter 3.47.5 / Dart 3.13.4 is installed at `~/flutter`** and both
+the font and the icon commits are now verified on this box — `flutter analyze`
+reports 0 errors, `flutter test` passes (including the v48 restore test against
+the real export), and `flutter build apk --debug` produces an APK carrying all
+479 new icons and Inter.
+
+Two environment facts that make it work, both persisted in `~/.bashrc`:
+- **`storage.googleapis.com` does not resolve through mihomo's fallback group**,
+  and that is where Flutter fetches its Dart SDK, engine artifacts and packages.
+  `FLUTTER_STORAGE_BASE_URL=https://storage.flutter-io.cn` and
+  `PUB_HOSTED_URL=https://pub.flutter-io.cn` are set; without them `pub get`
+  hangs and fails. `services.gradle.org` is unreachable for the same reason —
+  Gradle distributions come from `mirrors.cloud.tencent.com/gradle/`.
+- **`ALL_PROXY=socks5://127.0.0.1:7890` is set globally and breaks curl**, which
+  prefers it over `HTTPS_PROXY`; the http form works and the socks5 form does
+  not. Every fetch returns 000 until it is unset. Same trap the lexicon already
+  recorded for httpx.
+
+Running the tests needs the sqlite shim: `LD_LIBRARY_PATH=<dir holding a
+libsqlite3.so symlink to /lib/x86_64-linux-gnu/libsqlite3.so.0>`, and
+`BACKUP=<path to a real v48 export>` un-skips the restore test.
 
 **Category icons — DONE and deployed**, commit `c3114d9`. All 479 replaced with
 the flux1-dev outline set Brian judged on 2026-09-08 (*"90% of the icons are very

@@ -46,6 +46,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+# Gradle's own output. `/build/` above is anchored to the flutter project root,
+# so it does NOT cover this one — `flutter build apk` leaves it untracked and it
+# would otherwise be committed.
+/android/build/
+/android/.gradle/
 
 # Keys
 /android/key.properties
