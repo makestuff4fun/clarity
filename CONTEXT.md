@@ -4,12 +4,13 @@ Durable project facts live in `README.md`. This file is the live working
 context: what is in flight, what was decided, and what is waiting on Brian.
 It is a **snapshot, not a log** — rewrite it rather than appending.
 
-⚠️ **If you have just been told to do a context trim: this file is already
-current.** Several consecutive trims have run with no work between them and
-found nothing to add. Check `git log` and `git status` first — if HEAD is
-unchanged and the tree is clean, nothing has happened since this was written,
-and the correct action is to leave it alone rather than reword it. Rewriting a
-settled snapshot only risks losing detail that was put there deliberately.
+⚠️ **If you have been told to do a context trim: rewrite this file, even if you
+judge nothing has changed.** The harness uses its **mtime** as the completion
+signal; a `.agent_shutdown` marker alone is read as a claim, not as done. An
+earlier version of this very paragraph said the opposite — "if HEAD is unchanged,
+leave it alone" — which was wrong, and left six trims looking unfinished. Preserve
+the content faithfully when you rewrite; the risk of a reword dropping something
+deliberate is real, but it is smaller than the risk of the trim not registering.
 
 There is no project `CLAUDE.md` and Brian has said not to assume one. Fleet-wide
 rules are in `~/.claude/CLAUDE.md`; cross-session environment quirks live in the
@@ -120,8 +121,9 @@ that failure was silent and cost a day.
 live; never run your own web server. The Clarity page is
 `/srv/www/images/clarity-icons/` → **https://images.hanquest.com:62280/clarity-icons/**
 (TLS, basic auth as `bairui`; the port cannot be dropped — 80/443 are blocked
-inbound by the ISP). Its builder exists only in a session scratchpad; **if that
-page matters again, write the builder into this repo first.**
+inbound by the ISP). The builder is **`budget/tool/publish_review_page.py`** —
+rescued from a session scratchpad, where it would have been lost. Its page
+content is the historical icon A/B; the mechanism is what to reuse.
 
 - ⚠️ **A 401 is not proof a file is served.** Caddy's `basic_auth` fires before
   the file lookup, so an existing path and a missing one both return 401. What
