@@ -140,10 +140,15 @@ pipeline that produced the current set, and it also enumerates every other
 artwork slot (landing, empty states, Android widget art, quick actions,
 notification silhouettes).
 
-The current pixel-art set is being replaced. **The constraint that governs the
-job**: these are drawn at roughly 20–40px inside a coloured chip, so legibility
-at chip size is the acceptance test, not appearance at 128px. See `CONTEXT.md`
-for where that work stands.
+The category icons are a flat-vector-illustration set rendered with
+`flux1-dev-fp8`, installed by `budget/tool/deploy_icons.py`. **The constraint
+that governs the job**: these are drawn at roughly 20–40px inside a coloured
+chip, so legibility at chip size is the acceptance test, not appearance at
+128px.
+
+The app's *other* artwork — onboarding illustrations, empty states, Android
+widget art, quick-action shortcuts and notification silhouettes — is still the
+2026-08-03 pixel-art set. See `CONTEXT.md`.
 
 ---
 

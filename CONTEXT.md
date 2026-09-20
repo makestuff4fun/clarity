@@ -3,7 +3,7 @@
 Durable project facts live in `README.md`. This file is the live working
 context: what is in flight, what was decided, and what is waiting on Brian.
 
-Last updated 2026-09-06.
+Last updated 2026-09-20.
 
 ---
 
@@ -18,7 +18,25 @@ TTFs and its bundled OFL are gone. See README, *Look and feel*.
 be compiled or analysed on this box — `flutter analyze` and `flutter test` need
 another machine. Say that rather than implying the change was checked.
 
-**Icons — IN PROGRESS, currently held.** See below.
+**Category icons — DONE and deployed**, commit `c3114d9`. All 479 replaced with
+the flux1-dev outline set Brian judged on 2026-09-08 (*"90% of the icons are very
+good, best we've made yet"*). `budget/tool/deploy_icons.py` is the installer.
+
+**The rest of the app's artwork is still the 2026-08-03 pixel art** — that is the
+remaining half of "a new set of icons" and nobody has started it:
+
+| slot | files | what |
+|---|---|---|
+| `budget/assets/images/` | 6 | empty states, no-search results (512px) |
+| `budget/assets/landing/` | 3 | onboarding illustrations (512px) |
+| `budget/assets/icons/fun/` | 2 | party hat, santa hat — seasonal overlays (256px) |
+| `budget/android/app/src/main/res/drawable/` | 11 | home-screen widget art, quick-action shortcuts |
+| `budget/assets/icon/notification_icon_android*.png` | 2 | notification silhouettes (white-on-tint) |
+
+The launcher icon itself is NOT pixel art — `budget/assets/icon/icon.png` is the
+Clarity lightbulb from commit `9bacd02` and predates the reskin.
+`budget/tool/process_pixel_art.py` enumerates every one of these slots and which
+source image feeds it, so it is the map for redoing them.
 
 ---
 
@@ -110,33 +128,24 @@ Two things to carry forward from it:
   Clarity's grid size. A drawn library is crisp at 24px because someone chose
   the weight at 24px.
 
-### The live question — HOLD
+### The approach question — RESOLVED, and not the way I argued
 
-Brian, on the finished A/B: *"They are both not amazing. Are we using a good
-model for this? This feels like the same mistakes we were making before."*
-**The 479 render is HELD pending an approach decision.** Do not author the 479
-descriptions or start a render until he answers.
+On 2026-09-06 Brian held the job with *"They are both not amazing. Are we using a
+good model for this? This feels like the same mistakes we were making before."* I
+argued the fault was the category of tool — that an icon set is a system and
+diffusion cannot hold one — and proposed a drawn vector base (Tabler, MIT;
+measured 65% auto-mapped against the 479 names, 85 with no candidate).
 
-**My recommendation, published on the page and unanswered:** the fault is not
-the model — it is the category of tool. An icon set is a *system*, and diffusion
-cannot hold a system; every round has treated 479 icons as 479 independent
-illustration problems, when what makes a set a set is shared invariants (one
-stroke weight, one grid, one level of detail, one optical size).
+**That is not what happened, and the record should say so.** The images session
+kept going on flux1-dev with the outline arm, and the set Brian judged on
+2026-09-08 is *"90% of the icons are very good, best we've made yet"* — the
+strongest verdict any icon round has had. The consistency problem I measured was
+real, but it was fixable within diffusion by people iterating on it, and my
+conclusion that it was not is refuted by the shipped set.
 
-Evidence measured on this batch alone:
-- six style arms collapsed into two families
-- "a bold line drawing" returned a pencil sketch about a third of the time
-- the same prompt gave 0.5% ink on dev and 11.9% on schnell
-- `decrease` drew a *rising* arrow; `wifi` drew a blob
-
-Proposed instead: build on a drawn vector base. **Tabler Icons** (MIT, 5,130
-icons, one 24px grid, one stroke weight), tinted per category the way the app
-already colours its chips. Measured coverage against all 479 names using the
-tags in `iconObjects.dart`: **128 exact, 184 via tags (65% auto-mapped), 82
-probable needing an eye, 85 with no candidate** (bagel, bakery, bathtub, bear,
-boxing-glove, burrito, canoe, cheque, aquarium…). The 65% is a floor — Tabler
-ships its own tags per SVG and the match used names only. The trade is losing
-colourful illustration for a coherent system.
+Keep the underlying measurements (they are in the section below and still true)
+and drop the conclusion. The vector proposal stays available for the remaining
+artwork slots if they ever want it, but nothing is waiting on it.
 
 ---
 
