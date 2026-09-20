@@ -171,3 +171,22 @@ and `android/gradle/wrapper/gradle-wrapper.properties`.
 
 Release Android builds are signed from `android/key.properties` if present, and
 fall back to the debug key otherwise.
+
+### Tests
+
+```bash
+cd budget
+mkdir -p /tmp/sqlite-shim
+ln -sf /lib/x86_64-linux-gnu/libsqlite3.so.0 /tmp/sqlite-shim/libsqlite3.so
+LD_LIBRARY_PATH=/tmp/sqlite-shim flutter test
+```
+
+The shim is not optional: `pubspec.yaml`'s native build hook links tests against
+the *system* SQLite (the prebuilt download is unreliable here), and the linker
+looks for `libsqlite3.so` while Ubuntu ships only `libsqlite3.so.0`.
+
+One test skips unless pointed at a real database export:
+
+```bash
+LD_LIBRARY_PATH=/tmp/sqlite-shim BACKUP=../cashew-db-v48-*.sql flutter test
+```
