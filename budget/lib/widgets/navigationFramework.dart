@@ -23,6 +23,7 @@ import 'package:budget/pages/notificationsPage.dart';
 import 'package:budget/pages/objectivesListPage.dart';
 import 'package:budget/pages/onBoardingPage.dart';
 import 'package:budget/pages/settingsPage.dart';
+import 'package:budget/pages/clarityChatPage.dart';
 import 'package:budget/pages/subscriptionsPage.dart';
 import 'package:budget/pages/transactionsListPage.dart';
 import 'package:budget/pages/upcomingOverdueTransactionsPage.dart';
@@ -521,6 +522,19 @@ class PageNavigationFrameworkState extends State<PageNavigationFramework> {
             ),
             condition: [0, 1, 2, 14].contains(currentPage),
           ),
+        ),
+      ),
+      Align(
+        alignment: AlignmentDirectional.bottomEnd,
+        child: AnimatedPadding(
+          duration: Duration(milliseconds: 200),
+          padding: EdgeInsetsDirectional.only(
+            bottom: getHeightNavigationSidebar(context) +
+                15 +
+                ([0, 1, 2, 14].contains(currentPage) ? 75 : 0),
+            end: 21,
+          ),
+          child: AgentButton(screen: clarityScreenName(currentPage)),
         ),
       ),
     ]);

@@ -20,6 +20,9 @@ const Duration kClarityAutoBackupInterval = Duration(minutes: 15);
 
 String? clarityToken() => sharedPreferences.getString(_kToken);
 
+String clarityBaseUrl() =>
+    sharedPreferences.getString(_kBaseUrl) ?? ClarityServer.kServerUrl;
+
 bool get clarityPaired => (clarityToken() ?? "").isNotEmpty;
 
 /// Stores the token issued by red for this device.
@@ -38,8 +41,7 @@ class ClaritySyncBackend implements SyncBackend {
   ClaritySyncBackend();
 
   ClarityServer get server => ClarityServer(
-        baseUrl:
-            sharedPreferences.getString(_kBaseUrl) ?? ClarityServer.kServerUrl,
+        baseUrl: clarityBaseUrl(),
         token: clarityToken,
       );
 
