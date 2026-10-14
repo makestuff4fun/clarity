@@ -1,0 +1,9 @@
+[Unit]
+Description=clarity-server: run clarity-backup.service hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

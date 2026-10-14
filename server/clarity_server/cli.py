@@ -3,14 +3,16 @@
     clarity device pair NAME [--json]   a one-time pairing code (10 minutes) and its clarity:// link
     clarity device list [--json]
     clarity device revoke NAME          effective on the device's next request
+    clarity backup run                  snapshot the DB, rsync it and every stored backup off-box
+    clarity backup verify               prove the off-box copy is fresh and complete (read-only)
 """
 import argparse
 import json
 import sys
 import time
 
-from . import db, devices
-from .app import default_db
+from . import backup, db, devices
+from .app import default_data, default_db
 from .errors import ApiError
 
 
@@ -31,9 +33,19 @@ def main(argv=None) -> int:
     p.add_argument("--json", action="store_true")
     p = dev.add_parser("revoke", help="revoke device NAME (from its next request)")
     p.add_argument("name")
+    bk = sub.add_parser("backup", help="off-box copy to tunnel-bear").add_subparsers(dest="sub", required=True)
+    bk.add_parser("run", help="snapshot and rsync to CLARITY_BACKUP_REMOTE")
+    bk.add_parser("verify", help="check the remote copy (read-only)")
     a = ap.parse_args(argv)
 
     path = default_db()
+    if a.cmd == "backup":
+        try:
+            print(backup.run(a.sub, path, default_data()))
+        except backup.BackupError as e:
+            print(f"clarity backup {a.sub}: {e}", file=sys.stderr)
+            return 1
+        return 0
     db.init(path)
     con = db.connect(path)
     try:

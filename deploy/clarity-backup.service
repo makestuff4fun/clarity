@@ -1,0 +1,12 @@
+[Unit]
+Description=clarity-server: hourly backup of red's data to tunnel-bear, then verify the off-box copy
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/projects/clarity
+Environment=CLARITY_DB=%h/.local/share/clarity/clarity.db
+Environment=CLARITY_DATA=%h/.local/share/clarity/data
+Environment=CLARITY_BACKUP_DIR=%h/backups/clarity
+Environment=CLARITY_BACKUP_REMOTE=tunnel-bear:backups/clarity/
+ExecStart=%h/projects/clarity/bin/clarity backup run
+ExecStart=%h/projects/clarity/bin/clarity backup verify
