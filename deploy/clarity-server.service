@@ -1,0 +1,16 @@
+[Unit]
+Description=clarity-server: Clarity's backup store on red (via Caddy)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/projects/clarity/server
+Environment=CLARITY_DB=%h/.local/share/clarity/clarity.db
+Environment=CLARITY_DATA=%h/.local/share/clarity/data
+Environment=PYTHONPATH=%h/projects/clarity/server
+ExecStart=%h/projects/clarity/server/.venv/bin/python -m uvicorn --factory clarity_server.app:app_from_env --host 127.0.0.1 --port 8796
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

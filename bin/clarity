@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# clarity: clarity-server's CLI (server/clarity_server/cli.py). Honours CLARITY_DB / CLARITY_DATA.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+export PYTHONPATH="$ROOT/server${PYTHONPATH:+:$PYTHONPATH}"
+exec "$ROOT/server/.venv/bin/python" -m clarity_server.cli "$@"

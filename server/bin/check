@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# clarity-server's own test suite.
+set -euo pipefail
+cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.."
+exec .venv/bin/python -m pytest -q
