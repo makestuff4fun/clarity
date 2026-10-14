@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Build, sign and publish Clarity, modelled on den-app's and the course's bin/release.
+#
+#   bin/release [--notes TEXT]          build + sign, then publish to /srv/www/dl/clarity/:
+#                                       clarity-<versionName>.apk, then latest.json LAST, so a
+#                                       phone never sees a half release (the feed is red's open
+#                                       download path https://dl.hanquest.com:62280/clarity/)
+#   bin/release --dry-run --out DIR     build + sign into DIR (APK + latest.json) only;
+#                                       nothing under /srv/www/dl/clarity is touched
+#
+# Signing: $CLARITY_RELEASE_KEYSTORE (default ~/.config/clarity/release.jks), alias clarity,
+# passwords from $CLARITY_RELEASE_STOREPASS / $CLARITY_RELEASE_KEYPASS, else from
+# ~/.config/clarity/release.env (the same two variables). Never the debug key, and never
+# created here: Brian makes the key. The version is budget/pubspec.yaml's `version:`
+# (versionName+versionCode): bump it before a real release.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+CONF=$HOME/.config/clarity
+PUBLISH=/srv/www/dl/clarity
+die() { echo "release: $*" >&2; exit 1; }
+
+DRY=0 OUT="" NOTES=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --dry-run) DRY=1 ;;
+        --out) [ $# -ge 2 ] || die "--out needs a directory"; OUT=$2; shift ;;
+        --notes) [ $# -ge 2 ] || die "--notes needs text"; NOTES=$2; shift ;;
+        -h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) die "unknown argument $1 (see --help)" ;;
+    esac
+    shift
+done
+under_publish() {
+    local p
+    for p in "$(realpath -m "$1")/" "$(realpath -m -s "$1")/"; do
+        case "$p" in "$PUBLISH"/*|"$(realpath -m "$PUBLISH")"/*) return 0 ;; esac
+    done
+    return 1
+}
+if [ "$DRY" = 1 ]; then
+    [ -n "$OUT" ] || die "--dry-run needs --out DIR"
+    ! under_publish "$OUT" || die "--dry-run must not write under $PUBLISH"
+else
+    [ -z "$OUT" ] || die "a real release always publishes to $PUBLISH (use --dry-run --out DIR to try one)"
+    OUT=$PUBLISH
+fi
+
+# 1. The signing key: Brian's, never created here.
+KS=${CLARITY_RELEASE_KEYSTORE:-$CONF/release.jks}
+if [ ! -f "$KS" ]; then
+    cat >&2 <<MSG
+release: no release keystore at $KS.
+Create it once, keep it out of git and backed up (losing it means phones cannot update):
+
+    mkdir -p ~/.config/clarity && chmod 700 ~/.config/clarity
+    keytool -genkeypair -keystore ~/.config/clarity/release.jks -storetype PKCS12 -alias clarity -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=clarity"
+    chmod 600 ~/.config/clarity/release.jks
+    printf 'CLARITY_RELEASE_STOREPASS=%s\nCLARITY_RELEASE_KEYPASS=%s\n' '<store password>' '<key password>' > ~/.config/clarity/release.env
+    chmod 600 ~/.config/clarity/release.env
+MSG
+    exit 1
+fi
+if [ -z "${CLARITY_RELEASE_STOREPASS:-}" ] && [ -f "$CONF/release.env" ]; then
+    set -a; . "$CONF/release.env"; set +a
+fi
+[ -n "${CLARITY_RELEASE_STOREPASS:-}" ] || die "no keystore password: set CLARITY_RELEASE_STOREPASS or write $CONF/release.env"
+# build.gradle signs the release build from these (and leaves it unsigned without them)
+export CLARITY_RELEASE_KEYSTORE=$(realpath "$KS") CLARITY_RELEASE_KEY_ALIAS=clarity CLARITY_RELEASE_STOREPASS \
+    CLARITY_RELEASE_KEYPASS=${CLARITY_RELEASE_KEYPASS:-$CLARITY_RELEASE_STOREPASS}
+
+export ANDROID_HOME=${ANDROID_HOME:-$HOME/android-sdk}
+BT=${BUILD_TOOLS:-$(ls -d "$ANDROID_HOME"/build-tools/* 2>/dev/null | sort -V | tail -1)}
+[ -x "$BT/apksigner" ] || die "no apksigner under $ANDROID_HOME/build-tools"
+FLUTTER=$(command -v flutter || echo "$HOME/flutter/bin/flutter")
+[ -x "$FLUTTER" ] || die "no flutter on PATH or at ~/flutter/bin/flutter"
+
+VERSION=$(sed -n 's/^version: *\([^ #]*\).*/\1/p' budget/pubspec.yaml | head -1)
+NAME=${VERSION%%+*} CODE=${VERSION#*+}
+[ -n "$NAME" ] && [ "$CODE" != "$VERSION" ] && [[ "$CODE" =~ ^[0-9]+$ ]] \
+    || die "cannot read versionName+versionCode from budget/pubspec.yaml's version: ($VERSION)"
+APK=clarity-$NAME.apk
+NOTES=${NOTES:-"Clarity $NAME"}
+if [ "$DRY" = 0 ] && [ -f "$OUT/latest.json" ]; then
+    live=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['version_code'])" "$OUT/latest.json")
+    [ "$CODE" -gt "$live" ] || die "versionCode $CODE is not newer than the published $live: bump budget/pubspec.yaml"
+fi
+
+# 2. Build, signed by gradle with the key above; then check that key and only it signed it.
+REL=budget/build/app/outputs/flutter-apk
+rm -rf "$REL"
+(cd budget && "$FLUTTER" build apk --release)
+BUILT=$REL/app-release.apk
+[ -f "$BUILT" ] || die "no release APK at $BUILT"
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+cp "$BUILT" "$STAGE/$APK"
+"$BT/apksigner" verify "$STAGE/$APK"
+want=$(keytool -exportcert -keystore "$CLARITY_RELEASE_KEYSTORE" -alias clarity -storepass:env CLARITY_RELEASE_STOREPASS \
+    | sha256sum | cut -c1-64)
+got=$("$BT/apksigner" verify --print-certs "$STAGE/$APK" | sed -n 's/.*certificate SHA-256 digest: //p' | sort -u)
+[ "$got" = "$want" ] || die "the APK is not signed (only) by $KS alias clarity"
+SHA=$(sha256sum "$STAGE/$APK" | cut -c1-64)
+python3 - "$STAGE/latest.json" "$CODE" "$NAME" "$SHA" "$APK" "$NOTES" <<'PY'
+import json, sys
+out, code, name, sha, url, notes = sys.argv[1:]
+json.dump({"version_code": int(code), "version_name": name, "sha256": sha, "url": url, "notes": notes},
+          open(out, "w"), indent=2, ensure_ascii=False)
+PY
+
+# 3. Out: the APK, then latest.json last.
+mkdir -p "$OUT"
+cp "$STAGE/$APK" "$OUT/$APK.part" && mv -f "$OUT/$APK.part" "$OUT/$APK"
+cp "$STAGE/latest.json" "$OUT/latest.json.part" && mv -f "$OUT/latest.json.part" "$OUT/latest.json"
+echo "release: $APK (versionCode $CODE, sha256 $SHA) and latest.json in $OUT$([ "$DRY" = 1 ] && echo ' (dry run)')"

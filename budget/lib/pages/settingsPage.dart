@@ -53,6 +53,7 @@ import 'package:material_symbols_icons/material_symbols_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/struct/update/updates.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
 import 'package:app_settings/app_settings.dart';
 import 'package:budget/widgets/outlinedButtonStacked.dart';
@@ -181,6 +182,13 @@ class MorePages extends StatelessWidget {
               ),
             ],
           ),
+          if (selfUpdateSupported)
+            SettingsContainer(
+              onTap: () => checkForUpdatesManually(context),
+              title: "Check for updates",
+              icon: Icons.system_update_rounded,
+              isOutlined: true,
+            ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [

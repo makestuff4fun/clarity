@@ -22,11 +22,11 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
+// The release key is passed by bin/release in the environment (never a file in the repo):
+// CLARITY_RELEASE_KEYSTORE (alias clarity), CLARITY_RELEASE_STOREPASS, CLARITY_RELEASE_KEYPASS.
+// Without it a release build is left unsigned: never the debug key.
+def releaseKeystore = System.getenv('CLARITY_RELEASE_KEYSTORE')
+def releaseSigned = releaseKeystore != null && !releaseKeystore.isEmpty()
 
 android {
     namespace "com.clarity.finance"
@@ -66,22 +66,18 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-                storeFile keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-                storePassword keystoreProperties['storePassword']
+            if (releaseSigned) {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv('CLARITY_RELEASE_STOREPASS')
+                keyAlias System.getenv('CLARITY_RELEASE_KEY_ALIAS') ?: 'clarity'
+                keyPassword System.getenv('CLARITY_RELEASE_KEYPASS') ?: System.getenv('CLARITY_RELEASE_STOREPASS')
             }
         }
     }
 
     buildTypes {
         release {
-            // Fall back to the debug key so an unsigned release build still
-            // succeeds for anyone without key.properties.
-            signingConfig keystorePropertiesFile.exists()
-                    ? signingConfigs.release
-                    : signingConfigs.debug
+            signingConfig releaseSigned ? signingConfigs.release : null
         }
     }
 }

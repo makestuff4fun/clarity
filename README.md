@@ -169,8 +169,13 @@ requires Gradle ≥ 8.14.0, AGP ≥ 8.11.1 and Kotlin ≥ 2.2.20, and refuses to
 below any of them. Those are the versions pinned in `android/settings.gradle`
 and `android/gradle/wrapper/gradle-wrapper.properties`.
 
-Release Android builds are signed from `android/key.properties` if present, and
-fall back to the debug key otherwise.
+Releases are built, signed and published by `bin/release` (repo root): it signs
+with `~/.config/clarity/release.jks` (alias `clarity`), publishes
+`clarity-<versionName>.apk` and then `latest.json` to `/srv/www/dl/clarity/`, red's
+open feed `https://dl.hanquest.com:62280/clarity/`, from which the app updates itself
+(Settings → "Check for updates", and a silent check on start).
+`bin/release --dry-run --out DIR` builds and signs into DIR only. A release build
+without that key is left unsigned; it never falls back to the debug key.
 
 ### Tests
 
