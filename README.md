@@ -195,3 +195,14 @@ One test skips unless pointed at a real database export:
 ```bash
 LD_LIBRARY_PATH=/tmp/sqlite-shim BACKUP=../cashew-db-v48-*.sql flutter test
 ```
+
+## Releasing
+
+`bin/release` builds, signs and publishes the release APK. The version comes from
+`budget/pubspec.yaml`'s `version:` (name+build number); bump it before a release.
+
+- `bin/release --dry-run --out DIR` builds and signs into DIR (APK + `latest.json`) and publishes nothing.
+- `bin/release [--notes TEXT]` publishes `clarity-<name>.apk`, then `latest.json` last, to `/srv/www/dl/clarity/`.
+- Signing key: `~/.config/clarity/release.jks` (alias `clarity`), passwords in `~/.config/clarity/release.env`
+  (`CLARITY_RELEASE_STOREPASS`, `CLARITY_RELEASE_KEYPASS`). Brian creates it; keep it out of git and backed up.
+- Feed: `https://dl.hanquest.com:62280/clarity/latest.json`; the app updates itself from it.
