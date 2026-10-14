@@ -9,6 +9,9 @@ import 'package:system_theme/system_theme.dart';
 //import 'package:budget/colors.dart';
 //getColor(context, "lightDarkAccent")
 
+// Standard fallback accent (Cashew's original blue).
+const Color kDefaultAccentColor = Color(0xFF1B447A);
+
 Color getColor(BuildContext context, String colorName) {
   return Theme.of(context).extension<AppColors>()?.colors[colorName] ??
       Colors.red;
@@ -624,7 +627,7 @@ ThemeData getLightTheme() {
     colorScheme: getColorScheme(brightness),
     useMaterial3: true,
     applyElevationOverlayColor: false,
-    typography: Typography.material2014(),
+    typography: Typography.material2021(),
     splashColor: getPlatform() == PlatformOS.isIOS
         ? Colors.transparent
         : appStateSettings["materialYou"]
@@ -657,7 +660,7 @@ ThemeData getDarkTheme() {
     fontFamilyFallback: ['Inter'],
     colorScheme: getColorScheme(brightness),
     useMaterial3: true,
-    typography: Typography.material2014(),
+    typography: Typography.material2021(),
     splashColor: getPlatform() == PlatformOS.isIOS
         ? Colors.transparent
         : appStateSettings["materialYou"]

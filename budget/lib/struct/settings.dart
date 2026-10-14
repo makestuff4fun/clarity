@@ -87,13 +87,24 @@ Future<bool> initializeSettings() async {
   await attemptToMigrateSetLongTermLoansAmountTo0();
   attemptToMigrateCustomNumberFormattingSettings();
 
-  // Clarity's purple accent from the app icon. One-shot migration of settings
-  // still carrying Cashew's defaults, so deliberate choices afterwards stick.
-  if (appStateSettings["migratedToPixelFont"] != true) {
-    appStateSettings["accentColor"] = toHexString(Color(0xFF433187));
-    await updateSettings("accentColor", toHexString(Color(0xFF433187)),
+  // The August retro reskin forced the app-icon purple as the accent. Move
+  // installs still carrying it to the system accent (or the standard blue);
+  // a colour picked since is left alone.
+  if (appStateSettings["migratedToStandardTheme"] != true) {
+    final retroPurple = toHexString(Color.fromARGB(255, 67, 49, 135));
+    if (appStateSettings["accentColor"] == retroPurple) {
+      if (await systemColorByDefault()) {
+        appStateSettings["accentSystemColor"] = true;
+        await updateSettings("accentSystemColor", true,
+            updateGlobalState: false);
+      } else {
+        appStateSettings["accentColor"] = toHexString(kDefaultAccentColor);
+        await updateSettings("accentColor", toHexString(kDefaultAccentColor),
+            updateGlobalState: false);
+      }
+    }
+    await updateSettings("migratedToStandardTheme", true,
         updateGlobalState: false);
-    await updateSettings("migratedToPixelFont", true, updateGlobalState: false);
   }
 
   // Pixelify Sans is gone. Anything still pointing at it — the previous

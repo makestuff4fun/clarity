@@ -28,7 +28,7 @@ Future<Map<String, dynamic>> getDefaultPreferences() async {
     "showExtraInfoText": true,
     "selectedWalletPk": "0",
     "selectedSubscriptionType": 0,
-    "accentColor": toHexString(Color(0xFF433187)),
+    "accentColor": toHexString(kDefaultAccentColor),
     "accentSystemColor": await systemColorByDefault(),
     "widgetOpacity": 1,
     "widgetTheme": "system", //system, light, dark
