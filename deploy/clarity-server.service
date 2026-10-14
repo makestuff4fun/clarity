@@ -8,6 +8,13 @@ WorkingDirectory=%h/projects/clarity/server
 Environment=CLARITY_DB=%h/.local/share/clarity/clarity.db
 Environment=CLARITY_DATA=%h/.local/share/clarity/data
 Environment=PYTHONPATH=%h/projects/clarity/server
+# The agent bridge (chat.py) forwards the app's chat to den's "Clarity" subject over loopback.
+# CLARITY_DEN_URL defaults to http://127.0.0.1:8781; the den device token (scope chat) is read
+# from CLARITY_DEN_TOKEN_FILE (default ~/.config/clarity/den.token, mode 600, never in git);
+# CLARITY_BRIDGE_POLL is seconds (default 2). CLARITY_CHAT_SESSION is set by the managing agent
+# in a drop-in (clarity-server.service.d/chat.conf) once the subject exists; unset = chat 503.
+#Environment=CLARITY_DEN_URL=http://127.0.0.1:8781
+#Environment=CLARITY_DEN_TOKEN_FILE=%h/.config/clarity/den.token
 ExecStart=%h/projects/clarity/server/.venv/bin/python -m uvicorn --factory clarity_server.app:app_from_env --host 127.0.0.1 --port 8796
 Restart=on-failure
 RestartSec=5

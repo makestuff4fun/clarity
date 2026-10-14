@@ -2,21 +2,23 @@
 
 Every route except health and pair needs `Authorization: Bearer <token>`. Errors are
 {"error": {"code", "message"}}: 400 bad input, 401 no, bad or revoked token (or a
-locked-out IP), 403 missing scope, 404 unknown thing, 409 wrong state, 413 too large.
+locked-out IP), 403 missing scope, 404 unknown thing, 409 wrong state, 413 too large,
+503 chat not configured (no CLARITY_CHAT_SESSION or den token file).
 """
 import os
 import re
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import VERSION, backups, db, devices
+from . import VERSION, backups, chat, db, devices
 from .errors import ApiError
 
 _HTTP_CODES = {400: "bad_input", 401: "unauthorized", 403: "forbidden", 404: "not_found",
@@ -38,11 +40,24 @@ def default_data() -> str:
     return os.environ.get("CLARITY_DATA") or str(Path.home() / ".local" / "share" / "clarity" / "data")
 
 
-def create_app(db_path: str, data_dir: str, *, clock=time.time) -> FastAPI:
+def create_app(db_path: str, data_dir: str, *, clock=time.time, chat_cfg: chat.Config | None = None,
+               den_transport=None) -> FastAPI:
     Path(data_dir).mkdir(parents=True, exist_ok=True)
     db.init(db_path)
     lockout = devices.Lockout()
-    app = FastAPI(title="clarity-server", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None)
+    bridge = chat.Bridge(db_path, chat_cfg or chat.Config(), clock, den_transport)
+
+    @asynccontextmanager
+    async def lifespan(app):
+        bridge.start()
+        try:
+            yield
+        finally:
+            bridge.stop()
+
+    app = FastAPI(title="clarity-server", version=VERSION, docs_url=None, redoc_url=None, openapi_url=None,
+                  lifespan=lifespan)
+    app.state.bridge = bridge
 
     def err(status: int, code: str, message: str) -> JSONResponse:
         return JSONResponse(ApiError(status, code, message).body(), status_code=status)
@@ -143,9 +158,27 @@ def create_app(db_path: str, data_dir: str, *, clock=time.time) -> FastAPI:
             con.close()
         return FileResponse(p, media_type="application/octet-stream")
 
+    # --- chat: bug reports, change requests and questions, bridged to den (chat.py) ---------
+    @app.post("/api/v1/chat/messages")
+    def post_chat(body: chat.MessageIn, dev: dict = Depends(need(None))):
+        if not body.text.strip():
+            raise ApiError(400, "bad_input", "text: the message is empty")
+        if not bridge.cfg.available():
+            raise ApiError(503, "chat_unavailable", "the agent chat is not available (no den session or token)")
+        msg, new = bridge.store(body, dev["name"])
+        if new:
+            bridge.wake()
+        return {"message": msg}
+
+    @app.get("/api/v1/chat/messages")
+    def get_chat(after: int | None = Query(None, ge=0), limit: int = Query(100, ge=1, le=500),
+                 dev: dict = Depends(need(None))):
+        return {"messages": bridge.list(after, limit)}
+
     return app
 
 
 def app_from_env() -> FastAPI:
-    """uvicorn --factory clarity_server.app:app_from_env. CLARITY_DB, CLARITY_DATA."""
-    return create_app(default_db(), default_data())
+    """uvicorn --factory clarity_server.app:app_from_env. CLARITY_DB, CLARITY_DATA, CLARITY_DEN_URL,
+    CLARITY_DEN_TOKEN_FILE, CLARITY_CHAT_SESSION, CLARITY_BRIDGE_POLL."""
+    return create_app(default_db(), default_data(), chat_cfg=chat.Config.from_env())

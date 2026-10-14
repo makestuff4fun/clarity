@@ -48,5 +48,7 @@ def init(path: str) -> None:
     try:
         con.execute("PRAGMA journal_mode=WAL")
         con.executescript(SCHEMA)
+        from . import chat
+        chat.migrate(con)
     finally:
         con.close()
