@@ -138,33 +138,5 @@ class PartyHat extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) {
-    if (enabled == false) return child;
-    String? hatIcon;
-    if (DateTime.now().month == 12 && DateTime.now().day == 31) {
-      hatIcon = "party-hat.png";
-    } else if (DateTime.now().month == 1 && DateTime.now().day == 1) {
-      hatIcon = "party-hat.png";
-    } else if (DateTime.now().month == 12 && DateTime.now().day >= 15) {
-      hatIcon = "santa-hat.png";
-    }
-    if (hatIcon == null) return child;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        child,
-        PositionedDirectional(
-          start: -7,
-          top: -16.6,
-          child: Transform.rotate(
-            angle: -0.24,
-            child: Image.asset(
-              "assets/icons/fun/" + hatIcon,
-              width: size,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => child;
 }

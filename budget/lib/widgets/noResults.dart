@@ -1,5 +1,4 @@
 import 'package:budget/colors.dart';
-import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/widgets/textWidgets.dart';
 import 'package:flutter/material.dart';
@@ -41,38 +40,30 @@ class NoResults extends StatelessWidget {
                               ? 400
                               : MediaQuery.sizeOf(context).height * 0.4
                           : 270),
-                  child: appStateSettings["materialYou"]
-                      ? ColorFiltered(
-                          colorFilter: ColorFilter.mode(
-                            !appStateSettings["materialYou"]
-                                ? getColor(context, "black").withOpacity(0.1)
-                                : tintColor == null
-                                    ? Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.7)
-                                    : tintColor!.withOpacity(0.7),
-                            BlendMode.srcATop,
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: tintColor?.withOpacity(0.25) ??
+                            Theme.of(context).colorScheme.primaryContainer,
+                      ),
+                      child: FractionallySizedBox(
+                        widthFactor: 0.5,
+                        heightFactor: 0.5,
+                        child: FittedBox(
+                          child: Icon(
+                            noSearchResultsVariation
+                                ? Icons.search_off_rounded
+                                : Icons.inbox_rounded,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimaryContainer,
                           ),
-                          child: ColorFiltered(
-                            colorFilter: greyScale,
-                            child: Opacity(
-                              opacity: 1,
-                              child: Image(
-                                image: noSearchResultsVariation
-                                    ? AssetImage(
-                                        "assets/images/no-search-filter.png")
-                                    : AssetImage(
-                                        "assets/images/empty-filter.png"),
-                              ),
-                            ),
-                          ),
-                        )
-                      : Image(
-                          image: noSearchResultsVariation
-                              ? AssetImage("assets/images/no-search.png")
-                              : AssetImage("assets/images/empty.png"),
                         ),
+                      ),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 30),
                 TextFont(

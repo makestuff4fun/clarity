@@ -67,23 +67,9 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
   bool selectedIncludeIncome = false;
 
   bool showImage = false;
-  final Image imageLanding1 = Image(
-    image: AssetImage("assets/landing/Graph.png"),
-  );
-  final Image imageLanding2 = Image(
-    image: AssetImage("assets/landing/BankOrPig.png"),
-  );
-  final Image imageLanding3 = Image(
-    image: AssetImage("assets/landing/PigBank.png"),
-  );
-
-  @override
-  void didChangeDependencies() {
-    precacheImage(imageLanding1.image, context);
-    precacheImage(imageLanding2.image, context);
-    precacheImage(imageLanding3.image, context);
-    super.didChangeDependencies();
-  }
+  final Widget imageLanding1 = _LandingIcon(Icons.insights_rounded);
+  final Widget imageLanding2 = _LandingIcon(Icons.account_balance_rounded);
+  final Widget imageLanding3 = _LandingIcon(Icons.savings_rounded);
 
   nextNavigation({bool generatePreview = false}) async {
     if (selectedAmount != null && selectedAmount != 0) {
@@ -198,7 +184,7 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
       //               ? MediaQuery.sizeOf(context).height * 0.5
       //               : 300),
       //       child: Image(
-      //         image: AssetImage("assets/landing/DepressedMan.png"),
+      //         image: AssetImage("the depressed-man illustration"),
       //       ),
       //     ),
       //     SizedBox(height: 15),
@@ -620,6 +606,32 @@ class OnBoardPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LandingIcon extends StatelessWidget {
+  const _LandingIcon(this.icon);
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Theme.of(context).colorScheme.primaryContainer,
+        ),
+        child: FractionallySizedBox(
+          widthFactor: 0.5,
+          heightFactor: 0.5,
+          child: FittedBox(
+            child: Icon(icon,
+                color: Theme.of(context).colorScheme.onPrimaryContainer),
+          ),
+        ),
+      ),
     );
   }
 }
