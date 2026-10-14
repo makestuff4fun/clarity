@@ -8,6 +8,7 @@ import 'package:budget/pages/autoTransactionsPageEmail.dart';
 import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/throttler.dart';
+import 'package:budget/widgets/clarityProvision.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/importCSV.dart';
 import 'package:budget/widgets/navigationFramework.dart';
@@ -276,6 +277,8 @@ Future processMessageToParse(
 
 Future executeAppLink(BuildContext? context, Uri uri,
     {Function(dynamic)? onDebug}) async {
+  // Pairing with red works before onboarding too: it is the zero-setup path.
+  if (isProvisionLink(uri)) return await handleProvisionLink(uri);
   if (appStateSettings["hasOnboarded"] != true) return;
   if (!appLinksThrottler.canProceed()) return;
 

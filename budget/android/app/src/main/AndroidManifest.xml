@@ -52,6 +52,13 @@
                 <data android:scheme="https" android:host="cashewapp.web.app" android:pathPrefix="/addTransaction"/>
                 <data android:scheme="https" android:host="cashewapp.web.app" android:pathPrefix="/addTransactionRoute"/>
             </intent-filter>
+            <!-- Zero-setup pairing with clarity-server on red (handled by appLinks.dart). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="clarity" android:host="provision" />
+            </intent-filter>
 
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user

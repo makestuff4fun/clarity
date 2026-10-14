@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:budget/struct/backend/claritySyncBackend.dart';
 import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:universal_html/html.dart' as html;
@@ -411,6 +412,8 @@ Future<void> createBackup(
 
 Future<void> deleteRecentBackups(context, amountToKeep,
     {bool? silentDelete}) async {
+  // red keeps every backup; there is nothing to prune.
+  if (syncBackend is ClaritySyncBackend) return;
   try {
     if (silentDelete == false || silentDelete == null) {
       loadingIndeterminateKey.currentState?.setVisibility(true);

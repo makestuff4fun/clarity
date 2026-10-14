@@ -8,6 +8,8 @@ import 'package:budget/struct/logging.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
+import 'package:budget/struct/backend/claritySyncBackend.dart';
+import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:budget/widgets/util/appLinks.dart';
 import 'package:budget/widgets/util/onAppResume.dart';
 import 'package:budget/widgets/util/watchForDayChange.dart';
@@ -50,6 +52,7 @@ void main() async {
     await loadCurrencyJSON();
     await loadLanguageNamesJSON();
     await initializeSettings();
+    if (!kIsWeb) configureBackends(sync: ClaritySyncBackend());
     tz.initializeTimeZones();
     final String locationName =
         (await FlutterTimezone.getLocalTimezone()).identifier;
@@ -67,6 +70,7 @@ void main() async {
         ),
       ),
     );
+    Future.delayed(Duration(seconds: 5), () => clarityAutoBackup());
   });
 }
 
@@ -146,6 +150,7 @@ class App extends StatelessWidget {
           updateGlobalAppLifecycleState: true,
           onAppResume: () async {
             await setHighRefreshRate();
+            clarityAutoBackup();
           },
           child: InitializeBiometrics(
             child: InitializeNotificationService(
