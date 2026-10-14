@@ -1,0 +1,29 @@
+title: "Clarity round 1: bump the version once and prove a full release dry run"
+needs: [standard-theme, no-pixel-art, app-icon, self-update, app-sync, chat-button]
+model: sonnet
+runaway: {minutes: 60}
+context: [.den/checks/check_release_r1.sh, .den/checks/app_icon.py, .den/checks/flutter_common.sh, budget/pubspec.yaml, bin/release]
+protected: [.den/**]
+done_when: bash .den/checks/check_release_r1.sh
+do: |
+  THE JOB
+  Bump Clarity's pubspec `version:` once for this round (5.4.3+416 today: a new version name
+  and a build number above 416), then make sure `bin/release --dry-run --out DIR` builds an APK
+  that carries the whole round: the adaptive icon with its monochrome layer, the
+  clarity://provision handler, the update feed and clarity-server URLs, REQUEST_INSTALL_PACKAGES,
+  no pixel art and no key or token. Fix only what stops that; add a short "Releasing" section
+  to README.md (bin/release, the key at ~/.config/clarity/release.jks, the feed).
+
+  THE WHY
+  Brian's 2026-10-14 asks (icon, update mechanism, tunnel-bear sync, agent button, standard
+  theme) reach his phone as one release. Workers never publish: the managing agent runs
+  bin/release for real with Brian's key. HELD in .den/held/ with app-icon until the icon art lands.
+
+  THE GUARDRAILS
+  - Never run bin/release without --dry-run, never write under /srv/www, never create the release
+    key, never install on a device. Do not edit .den/. Stage files by name.
+
+  DONE MEANS
+  - `bash .den/checks/check_release_r1.sh` passes and `flutter test` still passes.
+  - Report in 2 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

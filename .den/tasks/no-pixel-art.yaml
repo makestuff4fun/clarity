@@ -1,0 +1,47 @@
+title: "Clarity: replace the 24 pixel-art pictures with standard Material art (icons, vector drawables)"
+needs: [standard-theme]
+model: sonnet
+runaway: {minutes: 75}
+context: [.den/checks/check_no_pixel_art.sh, .den/checks/pixel_art.sha256, .den/checks/flutter_common.sh, budget/lib/widgets/noResults.dart, budget/lib/pages/onBoardingPage.dart, budget/lib/pages/homePage/homePageUsername.dart, budget/lib/struct/quickActions.dart, budget/lib/struct/initializeNotifications.dart, budget/pubspec.yaml, CONTEXT.md]
+protected: [.den/**]
+done_when: bash .den/checks/check_no_pixel_art.sh
+do: |
+  THE JOB
+  Remove every picture of the August retro reskin (the 24 files listed in
+  .den/checks/pixel_art.sha256; CONTEXT.md "What is left of the original ask" maps the slots)
+  and put standard Material art in their place:
+  - Onboarding (assets/landing/, 3) and empty / no-results states (assets/images/, 6): draw
+    them with Material icons (Icons.* or the material_symbols_icons package already in
+    pubspec) in a tonal circle using the theme's colorScheme (primaryContainer /
+    onPrimaryContainer), sized as the images were. Delete the PNGs and their pubspec asset
+    entries.
+  - Seasonal hats (assets/icons/fun/, 2): drop the overlay (delete the PNGs and the code
+    path that draws them) or use a Material icon; your call, keep it simple.
+  - Android res/drawable (11 PNGs: home-screen widget art and previews, quick-action
+    shortcut icons, the notification icon): replace each still-referenced one with an XML
+    vector drawable of the same name (Material icon paths, e.g. add, swap_horiz,
+    savings/account_balance_wallet; the notification icon a single-colour white silhouette)
+    and delete the PNG. Widget previews may be a vector of the widget's icon.
+  - assets/icon/notification_icon_android*.png (unused by lib/): delete.
+  Category icons (assets/categories/, the judged 479 outline set) and the launcher icon are
+  NOT part of this task.
+
+  THE WHY
+  Brian, 2026-10-14: "Change the theme back to more standard, ditch the 8bit. I don't like it."
+  These are the pixel-art pictures the reskin introduced (process_pixel_art.py made them). A
+  Material icon is the standard look and needs no new art pipeline.
+
+  THE GUARDRAILS
+  - Do not edit .den/. Never re-encode or recolour a pixel-art file to slip it past the hash
+    list: they go. No new raster art.
+  - budget/tool/process_pixel_art.py may stay (history) or go; nothing may call it.
+  - No version bump, no bin/release, no device installs. Do not touch the database or
+    cashew-db-*.sql. Stage files by name.
+  - Flutter is ~/flutter/bin/flutter (on PATH under den); README "Tests".
+
+  DONE MEANS
+  - `bash .den/checks/check_no_pixel_art.sh` passes (no pixel bytes anywhere in budget/, no
+    raster in those asset dirs, every asset literal resolves, the drawables are XML, the
+    debug APK builds), and `flutter test` still passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

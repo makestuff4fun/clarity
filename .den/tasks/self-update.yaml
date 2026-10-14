@@ -1,0 +1,62 @@
+title: "Clarity: updates itself from red's open feed (UpdateChecker, PackageInstaller, bin/release)"
+model: opus
+runaway: {minutes: 90}
+context: [.den/checks/check_self_update.sh, .den/checks/dart/update_checker_test.dart, .den/checks/flutter_common.sh, budget/android/app/build.gradle, budget/android/app/src/main/AndroidManifest.xml, budget/android/app/src/main/kotlin/com/clarity/finance/MainActivity.kt, budget/pubspec.yaml]
+protected: [.den/**]
+done_when: bash .den/checks/check_self_update.sh
+do: |
+  THE JOB
+  Give Clarity the fleet's update mechanism, the one den-app, Rebuild and the course use
+  (read ~/projects/den-app app/src/main/kotlin/com/hanquest/den/update/ and bin/release,
+  ~/projects/hanquest-course bin/release; Clarity is Flutter, so the checker is Dart and the
+  installer is Kotlin behind a MethodChannel).
+  - budget/lib/struct/update/updateChecker.dart (pure Dart, dart:io HttpClient; promote
+    `crypto` to a direct dependency, it is already in the lock file):
+        class UpdateInfo { final int versionCode; final String versionName, sha256, url, notes; }
+        class UpdateChecker {
+          static const String kFeedUrl = "https://dl.hanquest.com:62280/clarity/";
+          UpdateChecker({required int currentVersionCode, String feedUrl = kFeedUrl});
+          Future<UpdateInfo?> check();   // GET feedUrl + "latest.json"; null unless newer;
+                                         // null for an unsafe url ("..", "/", "://", empty) or
+                                         // when offline; never throws for those
+          Future<File> download(UpdateInfo info, File dest);  // GET feedUrl + info.url into a
+              // temp file beside dest, sha256 verified, renamed to dest; on mismatch delete
+              // everything written and throw
+        }
+    latest.json is {version_code, version_name, sha256, url, notes}. No Authorization header:
+    the feed is open on purpose.
+  - Android: MethodChannel "com.clarity.finance/update", method "install" {path}: hands the
+    verified APK to PackageInstaller (a session, as den-app's ApkInstaller.kt), plus
+    REQUEST_INSTALL_PACKAGES in the manifest.
+  - UI: check on start (off the UI isolate's critical path, silent when offline) and a
+    "Check for updates" row in Settings (About section is fine). A newer version offers
+    "Update" with its notes; currentVersionCode comes from package_info_plus.
+  - bin/release (repo root, committed, executable), as the course's: builds
+    `flutter build apk --release` in budget/, signed with ~/.config/clarity/release.jks alias
+    clarity (or $CLARITY_RELEASE_KEYSTORE; passwords $CLARITY_RELEASE_STOREPASS / _KEYPASS,
+    else ~/.config/clarity/release.env), then publishes clarity-<versionName>.apk and
+    latest.json LAST to /srv/www/dl/clarity/ (versionName/versionCode from pubspec
+    `version:`). `--dry-run --out DIR` writes only into DIR and refuses DIR under
+    /srv/www/dl/clarity. With no keystore it prints the keytool recipe naming
+    ~/.config/clarity/release.jks and exits non-zero. build.gradle: release builds sign with
+    that key (passed by bin/release, e.g. env or a temp properties file outside the repo),
+    never the debug key; drop the silent debug-key fallback for release.
+
+  THE WHY
+  Brian, 2026-10-14: "Add our same update mechanism to it." Every app of his updates itself
+  from red's open feed (https://dl.hanquest.com:62280/<app>/, /srv/www/dl/<app>/); integrity is
+  the APK signature plus latest.json's sha256.
+
+  THE GUARDRAILS
+  - Never create the release key (the check uses a throwaway one in a temp HOME). Never run
+    bin/release for real, write under /srv/www, or install on a device: the managing agent
+    publishes. Never commit keys, env files, key.properties, local.properties or APKs.
+  - No version bump (task release-r1 does it once). Do not edit .den/. Stage files by name.
+  - Flutter is ~/flutter/bin/flutter (on PATH under den); README "Tests".
+
+  DONE MEANS
+  - `bash .den/checks/check_self_update.sh` passes (the protected Dart test, 7 tests; the
+    installer in source; a bin/release dry run signed with a throwaway key, inspected), and
+    `flutter test` still passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

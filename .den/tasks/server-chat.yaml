@@ -1,0 +1,55 @@
+title: "clarity-server 3: the agent bridge: bug reports and change requests to den's Clarity subject"
+needs: [server]
+model: opus
+runaway: {minutes: 75}
+context: [.den/checks/check_server_chat.py, .den/checks/fake_den.py, .den/checks/server_common.py, .den/tasks/server.yaml]
+protected: [.den/**]
+done_when: server/.venv/bin/python .den/checks/check_server_chat.py
+do: |
+  THE JOB
+  Add the agent bridge to clarity-server: the app posts a bug report, a change request or a
+  question; the server stores it, forwards it to a den subject ("Clarity") over loopback with a
+  den device token, and mirrors the subject's replies back. Copy the fleet's two working bridges
+  (read only): ~/projects/hanquest backend/knowledge/course_chat.py (simplest) and
+  ~/projects/gym-app server/rebuild_server/trainer.py.
+
+  PINNED CONTRACT
+  - Env: CLARITY_DEN_URL (default http://127.0.0.1:8781), CLARITY_DEN_TOKEN_FILE (default
+    ~/.config/clarity/den.token; read fresh each time; missing/empty = offline),
+    CLARITY_CHAT_SESSION (the den subject's session id; unset = not configured),
+    CLARITY_BRIDGE_POLL (seconds, default 2).
+  - POST /api/v1/chat/messages (device bearer token) {text (1..4000 chars), client_id
+    ([A-Za-z0-9._-]{1,64}), kind ("bug" | "change" | "chat"), context? (object)} ->
+    {"message": Message}. Message = {id (int), role ("user" | "agent"), text, ts, client_id,
+    kind, state ("pending" | "sent" | "failed" | null for agent), context}. The same client_id
+    twice is stored once (answer the stored one). Bad input 400; no token 401; no
+    CLARITY_CHAT_SESSION or no token file -> 503 {"error": {"code": "chat_unavailable", ...}}.
+  - GET /api/v1/chat/messages?after=<id>&limit=<n> -> {"messages": [...]} oldest first.
+  - Forwarding: one background thread sends pending messages oldest first to den
+    POST {CLARITY_DEN_URL}/api/v1/chat/{session} (multipart/form-data field `text`,
+    Authorization: Bearer <token file>, Idempotency-Key: client_id). The text den sees is
+    "[bug] <text>" / "[change] <text>" / "<text>" for chat, then, if there is a context,
+    "\n\ncontext: <json.dumps(context)>". den down -> stays pending and is retried; never sent
+    twice.
+  - Mirroring: the same thread polls GET {den}/api/v1/chat/{session}?after=<cursor> and stores
+    each role "agent" message once, in den's order (cursor kept in the DB). Messages the bridge
+    itself sent are never mirrored back. No HTTP call to den under the DB lock.
+  - deploy/clarity-server.service gains the CLARITY_DEN_* comment (not the session id: the
+    managing agent sets it with a drop-in once the subject exists).
+
+  THE WHY
+  Brian, 2026-10-14: "Since it's a standard for our apps, add the agent button to directly add
+  bug reports and queue changes." The standard is the course's Chat tab and Rebuild's trainer:
+  the app talks only to its own red server, which bridges to a den subject that turns requests
+  into den tasks. A den token with scope chat must never be in the app. The button is task
+  chat-button.
+
+  THE GUARDRAILS
+  - Do not edit .den/. Never commit a token. Never call the real den (127.0.0.1:8781) in your
+    own tests: use a fake, as the check does. Keep server 1 green (server/bin/check).
+  - Stage files by name.
+
+  DONE MEANS
+  - `server/.venv/bin/python .den/checks/check_server_chat.py` passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

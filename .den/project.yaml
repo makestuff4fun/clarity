@@ -1,0 +1,32 @@
+# den-fleet project config. See den-fleet/docs/using-den.md. Written by the managing agent;
+# .den/** is protected from workers.
+goal: >-
+  Clarity, Brian's private budget app (Cashew-derived, Flutter, budget/; com.clarity.finance).
+  Round 1 (Brian, 2026-10-14): a proper launcher icon from the new app-icon set, self-update
+  from red's open feed, backup to red (then tunnel-bear) via its own clarity-server (server/),
+  an agent button that reaches a den subject through that server, and a standard Material 3
+  theme instead of the 8-bit reskin.
+branch: main
+tags: [android, flutter, server, finance]
+# setup (.den/setup.sh): the Gradle SDK pointer, the SQLite shim flutter test needs,
+# `flutter pub get` (offline first; the pub cache on red is warm) and the server venv
+# (built once from .den/server-requirements.txt, shared). Files setup creates are never committed.
+setup: bash .den/setup.sh
+env:
+  PATH: $HOME/flutter/bin:$HOME/.local/bin:$PATH
+  ANDROID_HOME: $HOME/android-sdk
+  ANDROID_SDK_ROOT: $HOME/android-sdk
+  GRADLE_USER_HOME: $HOME/.gradle
+  GRADLE_OPTS: -Dorg.gradle.caching=false
+  FLUTTER_STORAGE_BASE_URL: https://storage.flutter-io.cn
+  PUB_HOSTED_URL: https://pub.flutter-io.cn
+  LD_LIBRARY_PATH: $HOME/.local/share/clarity/sqlite-shim
+  HTTP_PROXY: http://127.0.0.1:7890
+  HTTPS_PROXY: http://127.0.0.1:7890
+  http_proxy: http://127.0.0.1:7890
+  https_proxy: http://127.0.0.1:7890
+  ALL_PROXY: ""
+  all_proxy: ""
+  NO_PROXY: localhost,127.0.0.1,::1
+  no_proxy: localhost,127.0.0.1,::1
+  PYTHONPATH: $DEN_WORKTREE/server

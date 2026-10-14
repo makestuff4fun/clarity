@@ -1,0 +1,59 @@
+title: "Clarity app: the agent button (bug reports and queued changes to den's Clarity subject)"
+needs: [server-chat, app-sync]
+model: opus
+runaway: {minutes: 100}
+context: [.den/checks/check_chat_button.sh, .den/checks/dart/clarity_chat_test.dart, .den/checks/dart/clarity_chat_thread_test.dart, .den/checks/flutter_common.sh, .den/tasks/server-chat.yaml, .den/tasks/app-sync.yaml]
+protected: [.den/**]
+done_when: bash .den/checks/check_chat_button.sh
+do: |
+  THE JOB
+  Add the fleet's agent button to Clarity: from anywhere in the app Brian taps it, picks "Bug
+  report", "Change" or "Ask", types, and it reaches den's "Clarity" subject through
+  clarity-server's chat API (task server-chat: POST/GET /api/v1/chat/messages; read its
+  contract in .den/tasks/server-chat.yaml). Model it on the course's Chat tab
+  (~/projects/hanquest-course .den/tasks/chat-tab.yaml) and Rebuild's trainer screen.
+  - budget/lib/struct/backend/clarityChat.dart:
+        class ChatMessage { ChatMessage({required int id, required String role,
+            required String text, String kind = "chat", String? clientId, String? state,
+            double? ts}); ... }
+        class ClarityChat {
+          ClarityChat({required Directory dir, String baseUrl = ClarityServer.kServerUrl,
+                       required String? Function() token});
+          Future<String> send(String text, {String kind = "chat", Map<String, dynamic>? context});
+              // queue on disk; no network; returns the client_id
+          Future<int> pendingCount();
+          Future<int> flush();   // POST queued oldest first; 200 -> dequeued; else stop, keep;
+                                 // never throws; returns how many went
+          Future<List<ChatMessage>> fetch();   // GET ?after=<newest cached id>; cache to disk;
+                                               // returns the new ones; offline -> []
+          Future<List<ChatMessage>> messages();  // cached thread, then queued (id -1, state "queued")
+        }
+    A message whose POST got no 200 is re-sent with the SAME client_id (the server dedups).
+  - budget/lib/widgets/clarityChatThread.dart: ClarityChatThread({required List<ChatMessage>
+    messages, required void Function(String text, String kind) onSend}): plain Material widgets,
+    no app globals (no appStateSettings, no .tr() needed). Brian right, Claude left; a queued
+    message carries a Key('chat-queued') element; kind chips Key('chat-kind-bug'),
+    Key('chat-kind-change'), Key('chat-kind-chat'); text field Key('chat-input'); send
+    Key('chat-send') (empty text sends nothing; sending clears the field).
+  - The button: Key('agent-button'), reachable from the main screens (an app-bar action or a
+    small FAB; your call, standard Material). It opens a page showing ClarityChatThread for a
+    ClarityChat under the app's support dir with ClarityServer's token (from app-sync); while
+    open it flushes and fetches every 2 s; each message carries context {"screen",
+    "app_version"}. Not paired: say so above the field; messages still queue.
+
+  THE WHY
+  Brian, 2026-10-14: "Since it's a standard for our apps, add the agent button to directly add
+  bug reports and queue changes." The subject turns his requests into den tasks for this repo.
+  The app talks only to clarity-server; it never talks to den and never holds a den token.
+
+  THE GUARDRAILS
+  - Do not edit .den/ or server/. Network never on the UI path.
+  - No version bump, no bin/release, no device installs. Stage files by name.
+  - Flutter is ~/flutter/bin/flutter (on PATH under den); README "Tests".
+
+  DONE MEANS
+  - `bash .den/checks/check_chat_button.sh` passes (the protected Dart tests, 9 tests; the button
+    and its page exist; no den address in the app; the debug APK builds), and `flutter test`
+    still passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

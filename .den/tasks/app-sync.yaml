@@ -1,0 +1,63 @@
+title: "Clarity app: back up to clarity-server on red, signed in from an adb-fired clarity://provision link"
+needs: [server]
+model: opus
+runaway: {minutes: 100}
+context: [.den/checks/check_app_sync.sh, .den/checks/dart/clarity_server_test.dart, .den/checks/flutter_common.sh, .den/tasks/server.yaml, budget/lib/struct/backend/syncBackend.dart, budget/lib/widgets/accountAndBackup.dart, budget/android/app/src/main/AndroidManifest.xml, README.md]
+protected: [.den/**]
+done_when: bash .den/checks/check_app_sync.sh
+do: |
+  THE JOB
+  Clarity's backup UI (accountAndBackup.dart: sign in, back up, list, restore, auto backups) runs
+  on the stub SyncBackend in lib/struct/backend/syncBackend.dart. Give it a real backend:
+  clarity-server on red (task server; its contract is in .den/tasks/server.yaml).
+  - budget/lib/struct/backend/clarityServer.dart (dart:io HttpClient; `crypto` as a direct
+    dependency, already in the lock file):
+        class ClarityBackup { final String id, sha256, device; final int bytes; final double ts; }
+        class ClarityServer {
+          static const String kServerUrl = "https://clarity.hanquest.com:62280";
+          ClarityServer({String baseUrl = kServerUrl, required String? Function() token});
+          static Future<String> redeem(String code, {String baseUrl = kServerUrl,
+                                                     String name = "clarity-phone"});
+              // POST /api/v1/pair {code, name, platform: "android", app_version} -> token; non-200 throws
+          Future<ClarityBackup> upload(Uint8List db);   // POST /api/v1/backups, raw body,
+                                                        // X-Content-Sha256, Bearer
+          Future<List<ClarityBackup>> list();           // newest first
+          Future<Uint8List> download(String id);
+        }   // no token -> throws without a request; any non-200 throws
+        class ProvisionLink { final String code; final String baseUrl; }
+        ProvisionLink? parseProvisionLink(Uri u);
+          // clarity://provision?code=CODE[&url=URL]; null without a code; url= allowed only
+          // https on hanquest.com or a subdomain, or http on 127.0.0.1 / localhost / 10.0.2.2
+  - A ClaritySyncBackend implements SyncBackend on ClarityServer (signIn = "paired?", listFiles /
+    uploadFile / downloadFile map to the backups API; deleteFile may throw "not supported":
+    red keeps every backup) and is registered with configureBackends(...) at startup. The token
+    lives in the app's private storage (shared_preferences is fine), never in the APK.
+  - Zero setup (fleet rule: Brian never types a server, email or password): MainActivity (or a
+    small activity) handles VIEW clarity://provision (exported, BROWSABLE, exactly one handler);
+    the app redeems the code, stores the token, turns automatic backups on and lands on Home.
+    A refused code says so in words and offers "Try again". The manager runs
+        bin/clarity device pair find-n6 --json      # on red
+        adb shell am start -a android.intent.action.VIEW -d '<link>' com.clarity.finance
+  - Backups happen without Brian thinking about them: on app open/resume when the database
+    changed since the last successful upload (compare sha256), at most every 15 minutes, off
+    the UI path, silent when offline. The existing manual "Back up now" and restore keep working
+    against red.
+
+  THE WHY
+  Brian, 2026-10-14: "Add sync to tunnel-bear like all our app." Clarity's database lives only
+  on his phone. Phone -> clarity-server on red -> tunnel-bear (server-backup) is how every app
+  of his keeps its data. The app talks only to red.
+
+  THE GUARDRAILS
+  - Never change the database schema (48; README) or restore format. A restore from red must
+    produce the same DB a local restore of that file would.
+  - No token, code or password in logs or in the APK. Do not edit .den/ or server/.
+  - No version bump, no bin/release, no device installs. Never stage cashew-db-*.sql. Stage by name.
+  - Flutter is ~/flutter/bin/flutter (on PATH under den); README "Tests".
+
+  DONE MEANS
+  - `bash .den/checks/check_app_sync.sh` passes (the protected Dart test, 8 tests, against a fake
+    server; the backend is registered; the provision link is handled; the debug APK builds), and
+    `flutter test` still passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

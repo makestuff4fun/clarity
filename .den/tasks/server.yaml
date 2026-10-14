@@ -1,0 +1,63 @@
+title: "clarity-server 1: Clarity's own server on red (127.0.0.1:8796): pairing, device tokens, backup store"
+model: opus
+runaway: {minutes: 75}
+context: [.den/checks/check_server.py, .den/checks/server_common.py, .den/server-requirements.txt, .den/setup.sh, README.md]
+protected: [.den/**]
+done_when: server/.venv/bin/python .den/checks/check_server.py
+do: |
+  THE JOB
+  Create clarity-server in server/: a small FastAPI service that stores Clarity's database
+  backups on red, with per-device bearer tokens issued by pairing. Copy gym-app's
+  rebuild-server (read ~/projects/gym-app server/rebuild_server/app.py, devices.py, cli.py,
+  bin/rebuild, deploy/rebuild-server.service; read only, do not import) and keep only what
+  this contract needs.
+
+  PINNED CONTRACT (the protected check uses exactly these)
+  - Package server/clarity_server/, run from server/ (den sets PYTHONPATH=<worktree>/server).
+    Only .den/server-requirements.txt packages plus the stdlib; server/requirements.txt repeats
+    those pins. The venv is server/.venv (setup links it; never commit it). server/bin/check
+    (executable) runs your own tests and exits 0.
+  - clarity_server.app.app_from_env() builds the app from CLARITY_DB (default
+    ~/.local/share/clarity/clarity.db) and CLARITY_DATA (default ~/.local/share/clarity/data).
+  - bin/clarity (repo root, executable bash -> server/.venv/bin/python -m clarity_server.cli,
+    PYTHONPATH=server, honours CLARITY_DB/CLARITY_DATA):
+      clarity device pair NAME --json  -> one JSON object {"code": "w1 w2 ... w8" (8 lowercase
+        words, one-time, 10 minutes, stored only as sha256), "link":
+        "clarity://provision?code=<urllib.parse.quote(code)>", "expires": <epoch>}
+      clarity device list [--json];  clarity device revoke NAME (effective on the next request)
+  - HTTP under /api/v1, JSON, errors {"error": {"code", "message"}} (400, 401, 403, 404, 409,
+    413); unknown /api/v1 routes 404 in that shape:
+    - GET /api/v1/health -> {"ok": true, "version": str}, no auth.
+    - POST /api/v1/pair {code, name, platform?, app_version?} -> {"token", "device", "scopes"};
+      the code accepted with spaces or hyphens, any case; bad/used/expired -> 401. Token =
+      secrets.token_urlsafe(32), only its sha256 stored.
+    - Everything else needs Authorization: Bearer <token>; missing/bad/revoked -> 401.
+    - POST /api/v1/backups: body = the raw SQLite file (Content-Type application/octet-stream),
+      header X-Content-Sha256 = its sha256. Not a SQLite file ("SQLite format 3\0" magic) or a
+      mismatched sha -> 400; over 64 MB -> 413. Stored as CLARITY_DATA/backups/<sha256>.sqlite
+      (temp name then rename) plus a row; -> {"id", "sha256", "bytes", "ts", "device"}. The
+      same bytes again answer the existing id (no second copy). Never deleted by the server.
+    - GET /api/v1/backups -> {"backups": [{id, sha256, bytes, ts, device}, ...]} newest first.
+    - GET /api/v1/backups/{id} -> the exact bytes (application/octet-stream); unknown -> 404.
+  - deploy/clarity-server.service (systemd user unit, not installed by you):
+    WorkingDirectory=%h/projects/clarity/server, Environment=CLARITY_DB=... and CLARITY_DATA=...,
+    ExecStart=%h/projects/clarity/server/.venv/bin/python -m uvicorn --factory
+    clarity_server.app:app_from_env --host 127.0.0.1 --port 8796, Restart=on-failure.
+    Tasks server-backup and server-chat extend this server; leave room for them.
+
+  THE WHY
+  Brian, 2026-10-14: "Add sync to tunnel-bear like all our app." Clarity keeps everything in
+  SQLite on his phone only, so one lost phone loses his finances. The fleet pattern is: the app
+  talks only to red (*.hanquest.com via Caddy, no basic_auth, the bearer token is the gate);
+  red's server copies everything to tunnel-bear hourly (task server-backup). The app half is
+  task app-sync. The Caddy route, DNS and the unit install are the managing agent's.
+
+  THE GUARDRAILS
+  - Do not edit .den/. Never commit a database, a backup, a token or the venv. Never touch
+    ~/.local/share/clarity, ~/.config or systemd for real. Do not touch budget/.
+  - Stage files by name.
+
+  DONE MEANS
+  - `server/.venv/bin/python .den/checks/check_server.py` passes.
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

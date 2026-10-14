@@ -1,0 +1,50 @@
+title: "clarity-server 2: hourly snapshot + every backup off-box to tunnel-bear, and a read-only verify"
+needs: [server]
+model: opus
+runaway: {minutes: 60}
+context: [.den/checks/check_server_backup.py, .den/checks/server_common.py, .den/tasks/server.yaml]
+protected: [.den/**]
+done_when: server/.venv/bin/python .den/checks/check_server_backup.py
+do: |
+  THE JOB
+  Make clarity-server's data impossible to lose silently: every hour a VACUUM INTO snapshot of
+  its database and every stored backup go to tunnel-bear, and `clarity backup verify` proves the
+  off-box copy is complete. Copy gym-app's server/rebuild_server/backup.py and
+  deploy/rebuild-backup.{service,timer} (read only), simplified to this contract.
+
+  PINNED CONTRACT
+  - Env: CLARITY_DB / CLARITY_DATA as server 1; CLARITY_BACKUP_DIR (local root, default
+    ~/backups/clarity); CLARITY_BACKUP_REMOTE (any rsync destination, default
+    tunnel-bear:backups/clarity/). Use only rsync for the remote, listing (`rsync --list-only`)
+    and fetching included; never ssh/ls/cp it. The check uses a local directory as the remote.
+  - `bin/clarity backup run`: VACUUM INTO CLARITY_BACKUP_DIR/hourly/clarity-YYYYmmddTHHMMSSZ.db
+    (UTC; temp name then rename); keep 48 hourly by filename time (a daily copy, 60 kept, is
+    welcome); rsync hourly/ to <remote>hourly/ mirroring retention, and CLARITY_DATA/backups/
+    to <remote>backups/ WITHOUT --delete (a backup blob is never deleted remotely).
+  - `bin/clarity backup verify` (read-only on the remote): fetch the newest remote hourly
+    snapshot into a temp dir, PRAGMA integrity_check ok, filename time at most 2 h old; every
+    backup row in the live DB has <remote>backups/<sha256>.sqlite whose content hashes to that
+    sha256 (fetch with rsync); print one line containing `remote_backups=N snapshot=<name>`;
+    exit 0 only if all of that holds, else non-zero with the reason.
+  - deploy/clarity-backup.service: Type=oneshot, Environment CLARITY_DB, CLARITY_DATA,
+    CLARITY_BACKUP_DIR=%h/backups/clarity, CLARITY_BACKUP_REMOTE=tunnel-bear:backups/clarity/,
+    exactly two ExecStart lines: `%h/projects/clarity/bin/clarity backup run` then
+    `... backup verify`. deploy/clarity-backup.timer: OnCalendar=hourly, Persistent=true.
+
+  THE WHY
+  Brian, 2026-10-14: "Add sync to tunnel-bear like all our app." tunnel-bear is the fleet's
+  off-box copy (den's fleet.db, rebuild-server and the knowledge service all rsync there from
+  red). The phone never reaches tunnel-bear; red does.
+
+  THE GUARDRAILS
+  - Never delete or rewrite a backup blob, locally or remotely. Never write the remote from
+    verify. Never run against tunnel-bear or install units for real: the managing agent does.
+  - Keep server 1 green (server/bin/check; the check re-runs it). Do not edit .den/. Stage by
+    name; never commit a database or backup.
+
+  DONE MEANS
+  - `server/.venv/bin/python .den/checks/check_server_backup.py` passes (run makes a sound
+    snapshot and mirrors every blob; verify passes read-only, and fails on a missing, altered or
+    not-yet-pushed blob, a truncated or stale snapshot and an empty remote; units as above).
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

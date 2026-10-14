@@ -1,0 +1,9 @@
+# clarity-server's check and runtime environment (pins copied from gym-app's rebuild-server). PROTECTED (.den/**).
+# .den/setup.sh builds one venv from exactly this file and links it as server/.venv in
+# every worktree. server/requirements.txt (the worker's) must list the same pins.
+# A new dependency is a managing-agent decision: ask, do not work around it.
+fastapi==0.139.2
+uvicorn==0.51.0
+httpx==0.28.1
+pytest==9.1.1
+jsonschema==4.23.0

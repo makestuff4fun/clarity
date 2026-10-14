@@ -1,0 +1,44 @@
+title: "Clarity: install its launcher icon (hanquest-images icons/app/clarity) as a real adaptive icon"
+model: sonnet
+runaway: {minutes: 50}
+context: [.den/checks/check_app_icon.sh, .den/checks/app_icon.py, .den/checks/flutter_common.sh, budget/pubspec.yaml, budget/android/app/src/main/AndroidManifest.xml]
+protected: [.den/**]
+done_when: bash .den/checks/check_app_icon.sh
+do: |
+  THE JOB
+  Give Clarity (com.clarity.finance) its new launcher icon: hanquest-images' icons/app/clarity,
+  rendered by that repo's app-icon-clarity task.
+  - Copy ~/projects/hanquest-images origin/red-dev icons/app/clarity/ic_launcher_fg.png,
+    ic_launcher_bg.png and ic_launcher_mono.png (`git -C ~/projects/hanquest-images fetch -q
+    origin red-dev && git -C ~/projects/hanquest-images show origin/red-dev:icons/app/clarity/<f>`)
+    byte for byte to budget/android/app/src/main/res/drawable-nodpi/.
+  - mipmap-anydpi-v26/ic_launcher.xml and ic_launcher_round.xml: <adaptive-icon> with
+    background @drawable/ic_launcher_bg, foreground @drawable/ic_launcher_fg, monochrome
+    @drawable/ic_launcher_mono, no <inset>.
+  - Legacy mipmap-{m,h,xh,xxh,xxx}dpi/ic_launcher.png and ic_launcher_round.png at
+    48/72/96/144/192 px, composited from the layers (~/projects/gym-app native/app/src/main/res
+    is the family's worked example).
+  - <application android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round">.
+  - Remove the old icon: res/drawable-*/ic_launcher_foreground.png, the #433187
+    ic_launcher_background colour, and the flutter_launcher_icons section of pubspec.yaml
+    (running it would regenerate the white-cornered icon); assets/icon/icon.png etc. may stay
+    if lib/ uses them.
+
+  THE WHY
+  Brian, 2026-10-14: "Can you fix the clarity icon? if you look at you will see the poor masking
+  and purple background but white square corners in it ... We have new icon sets, we should use
+  those." Today's foreground is the whole old square icon (white corners included) inset into
+  the mask on a purple background. HELD in .den/held/ until icons/app/clarity is on
+  hanquest-images' origin/red-dev; if it is missing, stop and say so (blocked).
+
+  THE GUARDRAILS
+  - Never edit the art or hanquest-images: if it looks wrong, say so.
+  - Nothing else changes in the app. No version bump, no release (task release-r1). Do not edit .den/.
+
+  DONE MEANS
+  - `bash .den/checks/check_app_icon.sh` passes (layers byte-identical, adaptive XML with a
+    monochrome layer and no inset, legacy mipmaps, manifest, old art gone; the debug APK's
+    icon is the adaptive xml and its foreground, found via the resource table, is transparent
+    outside the safe zone).
+  - Report in 2 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.

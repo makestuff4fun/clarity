@@ -1,0 +1,44 @@
+title: "Clarity: a standard Material 3 theme instead of the 8-bit reskin (dynamic colour, M3 type, no purple)"
+model: sonnet
+runaway: {minutes: 60}
+context: [.den/checks/check_standard_theme.sh, .den/checks/dart/standard_theme_test.dart, .den/checks/flutter_common.sh, budget/lib/colors.dart, budget/lib/struct/settings.dart, budget/lib/struct/defaultPreferences.dart, README.md]
+protected: [.den/**]
+done_when: bash .den/checks/check_standard_theme.sh
+do: |
+  THE JOB
+  Clarity (Flutter app in budget/) still carries the August "retro reskin" (commit 5cd921f):
+  the app-icon purple #433187 forced as the accent by a one-shot migration, and Material 2
+  (2014) typography. Make the theme plain Material 3:
+  - lib/colors.dart: add `const Color kDefaultAccentColor = Color(0xFF1B447A);` (Cashew's
+    original blue; any standard non-purple accent is acceptable, but keep the name) and use
+    it wherever the purple was the default. getLightTheme()/getDarkTheme(): useMaterial3
+    stays, typography becomes Typography.material2021() (or drop the override so ThemeData's
+    M3 default applies). Keep Inter as the font (Brian chose it in September); no pixel font.
+  - defaultPreferences.dart: "accentColor" defaults to kDefaultAccentColor; keep
+    "accentSystemColor": await systemColorByDefault() (dynamic colour on Android 12+) and
+    "materialYou" as they are.
+  - settings.dart: replace the purple migration ("migratedToPixelFont" block) with a one-shot
+    "migratedToStandardTheme" migration: if the stored accent is the purple, switch to the
+    system accent when systemColorByDefault() is true (set accentSystemColor true), else to
+    kDefaultAccentColor. A colour Brian picked since is left alone.
+  - web/manifest.json (and anything else under lib/ or web/) loses #433187.
+  Leave the launcher icon's background colour (android res, pubspec flutter_launcher_icons)
+  alone: task app-icon replaces that.
+
+  THE WHY
+  Brian, 2026-10-14: "Change the theme back to more standard, ditch the 8bit. I don't like it."
+  The pixel font is already gone (Inter, 34be351); the purple accent and old type scale are what
+  is left of the theme. The pixel-art pictures are task no-pixel-art.
+
+  THE GUARDRAILS
+  - Do not edit .den/. Do not touch art files, the database schema (48, see README) or
+    backups (cashew-db-*.sql is personal financial data; never stage it).
+  - No version bump, no bin/release, no device installs. Stage files by name.
+  - Flutter is ~/flutter/bin/flutter (on PATH under den). Tests: README "Tests" (the sqlite
+    shim is set up by .den/setup.sh). Keep `flutter test` green.
+
+  DONE MEANS
+  - `bash .den/checks/check_standard_theme.sh` passes (source greps + the protected Dart test,
+    5 tests, copied in for the run).
+  - Report in 3 bullets. Before reporting progress, audit each claim against a tool result from
+    this session; say so where something is not verified.
