@@ -1,0 +1,56 @@
+title: "Money summary + month CSV from the newest stored backup (clarity money summary|csv)"
+needs: [server]
+model: argon
+runaway: {minutes: 60}
+context: [.den/checks/check_money_summary.py, .den/checks/money_fixtures.py, .den/checks/NOTES.md, .den/checks/server_common.py,
+          server/clarity_server/cli.py, server/clarity_server/backups.py, budget/lib/widgets/exportCSV.dart]
+protected: [.den/**]
+done_when: server/.venv/bin/python .den/checks/check_money_summary.py
+do: |
+  THE JOB
+  Add `bin/clarity money summary` and `bin/clarity money csv`. They read the NEWEST backup that
+  clarity-server has stored (DATA/backups/<sha256>.sqlite, a whole Clarity SQLite database,
+  schema v48) and make:
+    1. a small JSON summary of the month so far: spent, income, top categories, accounts,
+       budget left, the last 7 days, how fresh the data is;
+    2. one month's transactions as the CSV Brian files with each invoice.
+  Put the logic in a new server/clarity_server/money.py and wire the subcommands in cli.py.
+  .den/checks/NOTES.md is the contract: the JSON shape, the CSV format, the amount and time-zone
+  rules, and the refusals. Read it first. Where NOTES and the check disagree, the check wins.
+  Tell the managing agent about the disagreement.
+
+  THE WHY
+  Brian, 2026-11-11: his daily expenses move to Clarity, and a job on red may read its backups.
+  The summary feeds a Money card in his phone hub app (den-app), and the CSV replaces the export
+  he makes by hand every month.
+  Delivery of the summary to den's records store is NOT in this task, because den-fleet has not
+  said how a job on red writes a record. So keep the seam clean:
+    - money.summarize(backup_path, *, backup, today) builds the dict and writes nothing;
+    - money.write_summary(summary, out_path) is the only writer;
+    - cli.py calls both through the module (`money.write_summary(...)`).
+  The check replaces write_summary to prove the seam.
+
+  THE GUARDRAILS
+  - Read-only, always. Open the server DB with `?mode=ro`. Open each backup with
+    `?mode=ro&immutable=1` or a temp copy: plain mode=ro on a WAL-header file creates -wal/-shm
+    files inside data/backups/. Never call db.init() or db.connect() from these commands, because
+    they create and write. Never create the DB or the data dir when they are missing.
+  - Read amounts and flags from the schema as NOTES says. Expenses are negative. The income flag
+    decides expense versus income. A row counts only when paid=1, it is not category "0"
+    (transfers and balance corrections), and it is not a loan. Never add or convert across
+    currencies.
+  - Use the process's local time zone, by honouring TZ. Do not hard-code +08:00 or UTC.
+  - Write the CSV encoder by hand, as NOTES says: CRLF between records, no trailing line break,
+    and quote a field that has a leading or trailing space. Python's csv module gets both wrong.
+  - Use the standard library only: no new dependencies. Keep server/bin/check green; adding a
+    server/tests/test_money.py is welcome. Do not edit .den/. Stage by name. Never commit a
+    database, a backup, a CSV of real data or the repo-root cashew-db-*.sql.
+  - Do not run against red's live data dir, and do not install timers. The managing agent wires
+    the job up later.
+
+  DONE MEANS
+  - `server/.venv/bin/python .den/checks/check_money_summary.py` prints `money-summary OK`.
+  - `server/bin/check` still passes, along with check_server.py, check_server_backup.py and
+    check_server_chat.py.
+  - Report in 3 bullets. Before reporting, audit each claim against a tool result from this
+    session, and say so where something is not verified.
