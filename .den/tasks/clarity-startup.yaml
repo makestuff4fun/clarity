@@ -1,0 +1,70 @@
+title: "Clarity 5.5.1: the release APK ships no SQLite, so the app freezes on its splash screen; and a startup failure is never silent again"
+priority: 12
+model: opus
+provider: claude-main
+runaway: {minutes: 180}
+needs: []
+context: [README.md, budget/pubspec.yaml, budget/lib/main.dart, budget/lib/struct/logging.dart, budget/lib/struct/initializeNotifications.dart,
+          budget/android/app/build.gradle, bin/release, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh, .den/checks/NOTES.md]
+protected: [.den/tasks/**, .den/project.yaml, .den/setup.sh, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh,
+            .den/checks/check_app_sync.sh, .den/checks/check_server.py, .den/checks/check_money_summary.py, server/**]
+done_when: bash .den/checks/check_startup.sh
+do: |
+  THE JOB
+  Brian installed Clarity 5.5.0 (the first RELEASE build, from bin/release) on his phone on 2026-11-20 and it
+  freezes on the splash screen for ever. Measured on the phone over adb by the managing agent:
+  - The process is alive and idle, the window never draws (`wms_surface_not_drawn`), logcat shows no error.
+  - `unzip -l clarity-5.5.0.apk` lists only libapp.so, libflutter.so, libdartjni.so and
+    libdatastore_shared_counter.so under lib/arm64-v8a/: THERE IS NO libsqlite3.so IN THE APK.
+  - budget/pubspec.yaml has `hooks: user_defines: sqlite3: {source: system, name_linux: sqlite3}`, added so
+    `flutter test` links the system SQLite on red. Its comment says "Flutter app builds bundle their own copy
+    regardless". That is false for this sqlite3 / sqlite3_flutter_libs (the `+eol` stub leaves it to the build
+    hook): with `source: system` the Android build bundles nothing, and Android has no SQLite an app may load.
+    So `database = await constructDb('db')` in main() throws.
+  - main() runs inside `captureLogs`, whose `runZonedGuarded` error handler is EMPTY (budget/lib/struct/
+    logging.dart): the exception is swallowed, `runApp` is never reached, the splash stays.
+  The 5.4.3 he ran in July was a debug build made another way, which is why this was never seen.
+  First CONFIRM this yourself (build the APK as bin/release does and look inside; if the cause is something
+  else, fix what you find and say so). Then:
+  1. THE APK BUNDLES SQLITE. A release (and debug) Android build contains lib/arm64-v8a/libsqlite3.so (and the
+     other ABIs the app ships), while `flutter test` on red still links the system SQLite as README.md's
+     "Tests" section describes. Choose the cleanest way (for example keep the system source out of
+     pubspec.yaml and give it to tests another way, or scope it so it cannot reach an Android build), fix the
+     false comment, and update README.md.
+  2. A STARTUP FAILURE IS NEVER SILENT. If anything in main() before `runApp` throws, or an uncaught error
+     reaches the zone before the first frame: it is written to logcat (tag `clarity`, the error and stack; a
+     plain `print` is captured by the zone, so use a route that reaches logcat in a release build), and the
+     app shows a plain screen instead of the splash: "Clarity could not start", the error's first line, a
+     Copy details button and a Try again button. Steps that are not essential (notifications, time zone,
+     currency and language names) must not stop the app from opening when they fail: log and continue with a
+     sane default. The database failing is essential: show the screen. Errors after the first frame keep
+     today's behaviour, plus the logcat line.
+  3. `bin/release` REFUSES TO PUBLISH an APK with no libsqlite3.so for arm64-v8a (a named error), so this
+     cannot ship again; `--dry-run` reports the same.
+  4. Version 5.5.1 (build 418) in budget/pubspec.yaml. Do NOT publish: the managing agent runs bin/release.
+  5. .den/checks/check_startup.sh (yours to write; the done_when): cheap source checks first (no
+     `source: system` reaching an Android build; the zone's error handler is not empty; the version), then
+     `bin/release --dry-run --out <tmp>` and `unzip -l` proving libsqlite3.so is in the APK for arm64-v8a, then
+     the flutter tests for the startup guard (a widget or unit test that a throwing init step leads to the
+     error screen and a throwing optional step does not stop the app). It must fail on today's tree. Add it
+     to .den/checks/NOTES.md.
+
+  THE WHY
+  He is standing at the console with the phone waiting to move his daily expenses from Cashew to Clarity, and
+  the first release build cannot open. An app that owns his money records must never fail without saying why.
+
+  THE GUARDRAILS
+  - Do not touch server/ or the earlier checks. Do not change the signing setup or read release.env beyond what
+    bin/release already does. Never print a password or key.
+  - Do not run bin/release without --dry-run. Do not write under /srv/www.
+  - One Flutter/Gradle build at a time; never `./gradlew --stop`. Use the proxy environment already set for den
+    runs; if a download fails say exactly which, do not work around it with another host.
+  - budget/pubspec.lock is dirty in the main checkout for reasons not yours: commit a lock change only if your
+    dependency change needs it, and say so.
+  - NEVER run a command that feeds a script through a heredoc (`python3 - <<EOF`, `bash <<EOF`, `cat <<EOF |`).
+    Write the script to a file and run the file.
+  - Wait for every background shell you started to finish before your verdict. Stage files by name.
+
+  DONE MEANS
+  - `bash .den/checks/check_startup.sh` exits 0 on your commit and you saw it fail before your change.
+  - Report in 3 bullets: what the cause was (confirmed or not), how tests still get SQLite, anything not verified.
