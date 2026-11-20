@@ -1,6 +1,9 @@
 """bin/clarity: clarity-server's command line. Honours CLARITY_DB and CLARITY_DATA.
 
-    clarity device pair NAME [--json]   a one-time pairing code (10 minutes) and its clarity:// link
+    clarity device pair NAME [--json] [--qr] [--qr-file PATH.png|.svg]
+                                        a one-time pairing code (10 minutes) and its clarity:// link;
+                                        --qr also draws the link as a QR code (not with --json),
+                                        --qr-file writes it as a PNG or SVG
     clarity device list [--json]
     clarity device revoke NAME          effective on the device's next request
     clarity backup run                  snapshot the DB, rsync it and every stored backup off-box
@@ -13,7 +16,7 @@ import time
 
 from pathlib import Path
 
-from . import backup, db, devices, money
+from . import backup, db, devices, money, qr
 from .app import default_data, default_db
 from .errors import ApiError
 
@@ -31,6 +34,8 @@ def main(argv=None) -> int:
     p.add_argument("name")
     p.add_argument("--scopes", default=devices.DEFAULT_SCOPES)
     p.add_argument("--json", action="store_true")
+    p.add_argument("--qr", action="store_true", help="also draw the link as a QR code for the app to scan")
+    p.add_argument("--qr-file", metavar="PATH", help="write the link's QR code to PATH (.png or .svg); it holds a live code")
     p = dev.add_parser("list", help="list paired devices")
     p.add_argument("--json", action="store_true")
     p = dev.add_parser("revoke", help="revoke device NAME (from its next request)")
@@ -81,6 +86,12 @@ def main(argv=None) -> int:
     con = db.connect(path)
     try:
         if a.sub == "pair":
+            if a.qr or a.qr_file:  # fail before a code is minted, not after
+                try:
+                    qr.preflight(a.qr_file)
+                except (ValueError, RuntimeError) as e:
+                    print(f"clarity: {e}", file=sys.stderr)
+                    return 2
             now = time.time()
             code = devices.new_pair_code(con, a.name, a.scopes, now)
             out = {"code": code, "link": devices.pair_link(code), "expires": now + devices.CODE_TTL}
@@ -89,6 +100,12 @@ def main(argv=None) -> int:
             else:
                 print(f"pairing code for {a.name.strip()} (valid 10 minutes, once):\n  {code}\n"
                       f"link:\n  {out['link']}")
+                if a.qr:
+                    print("\nor scan it with Clarity's pairing screen:\n" + qr.terminal(out["link"]))
+            if a.qr_file:
+                qr.save(out["link"], a.qr_file)
+                if not a.json:
+                    print(f"QR code written to {a.qr_file} (it holds the code: delete it once paired)")
         elif a.sub == "list":
             rows = devices.list_devices(con)
             if a.json:

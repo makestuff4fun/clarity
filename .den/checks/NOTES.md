@@ -288,3 +288,22 @@ clarity://provision link already took, so success and failure show the same mess
 - **Not verified (needs a phone):** the camera opening, the permission prompt and its denial screen, and a
   real QR being read off a screen; a real redeem against red from the new screen.
 - check_den_hook.sh pins `5.6.0+419`, so it now fails on its version line only.
+
+# pair-server (2026-11-20): what `check_pair_qr.py` pins
+
+Run: `python3 .den/checks/check_pair_qr.py` (seconds). `clarity device pair NAME` gains `--qr` (draw the
+clarity://provision link as a QR in the terminal) and `--qr-file PATH` (`.png` or `.svg`, mode 0600: it holds a
+live code). Encoder: **segno 1.6.6** (pure Python, no deps), lazily imported in `server/clarity_server/qr.py`.
+
+- **Decoded, not trusted:** the check carries its own QR reader (v1-10: finder/format bits, unmask, block
+  de-interleave, Reed-Solomon recomputed, byte mode) and reads the terminal drawing, the PNG pixels and the SVG
+  path back into modules; each must decode to exactly the printed (or JSON) link.
+- **Unchanged without --qr:** the plain output must match the old three-part text with no block characters.
+- **--json:** stdout is one JSON object with exactly `code`, `link`, `expires`; no drawing even with `--qr`.
+- **Drawing:** half-blocks (two module rows per line), 4-module light quiet zone, ink where the code is light
+  (right on dark terminals; on a tty colours are forced white-on-black, `NO_COLOR` turns that off); v6-M is 49x25.
+- **Bad --qr-file** (wrong extension, missing directory) or missing segno: rc 2 *before* a code is minted.
+- **segno in the venv:** `.den/server-requirements.txt` needs `segno==1.6.6` (managing agent). Until then the
+  check installs it once into `~/.local/share/clarity/check-segno-1.6.6` and sets PYTHONPATH for bin/clarity only;
+  `server/tests/test_qr.py` skips without segno.
+- **Not verified (needs a phone):** a real camera reading the terminal drawing.
