@@ -190,6 +190,16 @@ The shim is not optional: `pubspec.yaml`'s native build hook links tests against
 the *system* SQLite (the prebuilt download is unreliable here), and the linker
 looks for `libsqlite3.so` while Ubuntu ships only `libsqlite3.so.0`.
 
+That system source is scoped to **Linux only** (`source: {linux: system,
+default: sqlite3}`): `flutter test` runs as a Linux host build, so it gets the
+system library, while every Android build takes the `default` and bundles
+package:sqlite3's prebuilt `libsqlite3.so` for each ABI. Android has no SQLite an
+app may load, so an APK without it cannot open its database: Clarity 5.5.0
+shipped that way (`source: system` for every OS) and froze on the splash.
+`bin/release` now refuses such an APK (`NO_SQLITE_IN_APK`), and a startup
+failure shows "Clarity could not start" and is written to logcat under the tag
+`clarity` (`adb logcat -s clarity`); see `budget/lib/struct/startupGuard.dart`.
+
 One test skips unless pointed at a real database export:
 
 ```bash

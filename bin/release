@@ -91,6 +91,15 @@ rm -rf "$REL"
 (cd budget && "$FLUTTER" build apk --release)
 BUILT=$REL/app-release.apk
 [ -f "$BUILT" ] || die "no release APK at $BUILT"
+# Android has no SQLite an app may load, so the APK must carry its own: 5.5.0 shipped without one
+# (pubspec.yaml's sqlite3 hook said `source: system` for every OS) and froze on the splash screen.
+# Every ABI that ships Flutter must ship libsqlite3.so, and arm64-v8a (Brian's phone) must exist.
+LIBS=$(unzip -Z1 "$BUILT" 'lib/*' 2>/dev/null || true)
+grep -qx 'lib/arm64-v8a/libsqlite3.so' <<<"$LIBS" \
+    || die "NO_SQLITE_IN_APK: $BUILT has no lib/arm64-v8a/libsqlite3.so; the app cannot open its database (check pubspec.yaml's hooks: user_defines: sqlite3: source)"
+for abi in $(sed -n 's|^lib/\([^/]*\)/libflutter\.so$|\1|p' <<<"$LIBS"); do
+    grep -qx "lib/$abi/libsqlite3.so" <<<"$LIBS" || die "NO_SQLITE_IN_APK: $BUILT ships Flutter for $abi but no lib/$abi/libsqlite3.so"
+done
 STAGE=$(mktemp -d)
 trap 'rm -rf "$STAGE"' EXIT
 cp "$BUILT" "$STAGE/$APK"

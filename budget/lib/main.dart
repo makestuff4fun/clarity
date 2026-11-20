@@ -5,6 +5,7 @@ import 'package:budget/struct/currencyFunctions.dart';
 import 'package:budget/struct/iconObjects.dart';
 import 'package:budget/struct/keyboardIntents.dart';
 import 'package:budget/struct/logging.dart';
+import 'package:budget/struct/startupGuard.dart';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
@@ -42,26 +43,13 @@ bool allowDebugFlags = true || kIsWeb;
 bool allowDangerousDebugFlags = kDebugMode;
 
 void main() async {
+  // A failure here is never silent: see struct/startupGuard.dart.
   captureLogs(() async {
     WidgetsFlutterBinding.ensureInitialized();
-    await EasyLocalization.ensureInitialized();
-    sharedPreferences = await SharedPreferences.getInstance();
-    database = await constructDb('db');
-    notificationPayload = await initializeNotifications();
     entireAppLoaded = false;
-    await loadCurrencyJSON();
-    await loadLanguageNamesJSON();
-    await initializeSettings();
-    if (!kIsWeb) configureBackends(sync: ClaritySyncBackend());
-    tz.initializeTimeZones();
-    final String locationName =
-        (await FlutterTimezone.getLocalTimezone()).identifier;
-    tz.setLocalLocation(tz.getLocation(locationName));
-    iconObjects.sort((a, b) => (a.mostLikelyCategoryName ?? a.icon)
-        .compareTo((b.mostLikelyCategoryName ?? b.icon)));
-    setHighRefreshRate();
-    runApp(
-      DevicePreview(
+    await runStartup(
+      steps: clarityStartupSteps(),
+      app: () => DevicePreview(
         enabled: enableDevicePreview,
         builder: (context) => InitializeLocalizations(
           child: RestartApp(
@@ -69,10 +57,47 @@ void main() async {
           ),
         ),
       ),
+      onStarted: () =>
+          Future.delayed(Duration(seconds: 5), () => clarityAutoBackup()),
     );
-    Future.delayed(Duration(seconds: 5), () => clarityAutoBackup());
-  });
+  }, onError: handleStartupZoneError);
 }
+
+/// What main() does before runApp. Essential steps failing show "Clarity could not start";
+/// optional ones log and fall back to a default so the app still opens.
+List<StartupStep> clarityStartupSteps() => [
+      StartupStep("translations", () => EasyLocalization.ensureInitialized()),
+      StartupStep("preferences", () async {
+        sharedPreferences = await SharedPreferences.getInstance();
+      }),
+      StartupStep("database", () async {
+        database = await constructDb('db');
+      }),
+      StartupStep("notifications", () async {
+        notificationPayload = await initializeNotifications();
+      }, essential: false, fallback: () => notificationPayload = null),
+      StartupStep("currency names", () => loadCurrencyJSON(),
+          essential: false, fallback: () => currenciesJSON = {}),
+      StartupStep("language names", () => loadLanguageNamesJSON(),
+          essential: false, fallback: () => languageNamesJSON = {}),
+      StartupStep("settings", () => initializeSettings()),
+      StartupStep("backends", () {
+        if (!kIsWeb) configureBackends(sync: ClaritySyncBackend());
+      }),
+      StartupStep("time zone", () async {
+        tz.initializeTimeZones();
+        final String locationName =
+            (await FlutterTimezone.getLocalTimezone()).identifier;
+        tz.setLocalLocation(tz.getLocation(locationName));
+      }, essential: false, fallback: () => tz.setLocalLocation(tz.UTC)),
+      StartupStep("icon order", () {
+        iconObjects.sort((a, b) => (a.mostLikelyCategoryName ?? a.icon)
+            .compareTo((b.mostLikelyCategoryName ?? b.icon)));
+      }, essential: false),
+      StartupStep("refresh rate", () {
+        setHighRefreshRate();
+      }, essential: false),
+    ];
 
 GlobalKey<_InitializeAppState> appStateKey = GlobalKey();
 GlobalKey<PageNavigationFrameworkState> pageNavigationFrameworkKey =

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/struct/startupGuard.dart';
 import 'package:budget/widgets/dropdownSelect.dart';
 import 'package:budget/widgets/framework/pageFramework.dart';
 import 'package:budget/widgets/openPopup.dart';
@@ -45,12 +46,21 @@ class LogService {
   List<String> getLogs() => _logs;
 }
 
-captureLogs(Function body) {
+/// Runs [body] in a zone that routes print into [logService]. Uncaught errors go to [onError];
+/// without one they are still written to logcat (tag `clarity`), never dropped silently.
+captureLogs(Function body,
+    {void Function(Object error, StackTrace stackTrace)? onError}) {
   runZonedGuarded(
     () async {
       await body();
     },
-    (error, stackTrace) {},
+    (error, stackTrace) {
+      if (onError != null) {
+        onError(error, stackTrace);
+      } else {
+        logStartupError("Uncaught error", error, stackTrace);
+      }
+    },
     zoneSpecification: ZoneSpecification(
       print: (Zone self, ZoneDelegate parent, Zone zone, String message) {
         logService.log(message);

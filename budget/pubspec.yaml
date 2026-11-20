@@ -15,18 +15,24 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 5.5.0+417
+version: 5.5.1+418
 
 environment:
   sdk: ">= 3.0.0"
 
-# Native build hook config: on this machine the sqlite3 prebuilt download is
-# unreliable, so tests link against the system SQLite. Flutter app builds
-# bundle their own copy regardless.
+# Native build hook config for package:sqlite3 (source is read per target OS).
+# - linux: `flutter test` runs as a Linux host build and links the system
+#   SQLite (see README.md "Tests" for the libsqlite3.so shim).
+# - default (Android and the rest): bundle the package's prebuilt libsqlite3.so.
+#   Android has no SQLite an app may load, so `system` here ships an APK that
+#   cannot open its database: 5.5.0 did, and froze on the splash screen.
+#   bin/release refuses an APK without lib/arm64-v8a/libsqlite3.so.
 hooks:
   user_defines:
     sqlite3:
-      source: system
+      source:
+        linux: system
+        default: sqlite3
       name_linux: sqlite3
 
 dependencies:

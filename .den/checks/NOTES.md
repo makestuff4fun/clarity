@@ -169,3 +169,23 @@ numbers the same way (Dart `toString`).
 - **`older`** (`find-n6`, older): one row. Using it gives the wrong totals.
 - **`empty`** (`old-phone`, uploaded last, WAL header): nothing this month.
 - **`v47` / `v49`**: `main` with another `user_version`.
+
+# startup (`check_startup.sh`, 2026-11-20): Clarity must open, or say why it cannot
+
+Clarity 5.5.0 froze on the splash: `hooks: user_defines: sqlite3: source: system` applied to every
+OS, so the APK had no `libsqlite3.so`, `constructDb` threw in `main()`, and the empty zone handler in
+`captureLogs` swallowed it. Run from the repo root: `bash .den/checks/check_startup.sh` (one release
+build, a few minutes, plus `flutter test` on the startup guard).
+
+- **Source checks** (`startup_pubspec.py`, grep): the `source` the hook resolves for `android` (the
+  `android` key, else `default`, else the plain string) is not `system`/`process`/`executable`;
+  `logging.dart`'s zone handler is not `{}`; `main.dart` runs `runStartup(...)` with a `database`
+  step and `onError: handleStartupZoneError`; `bin/release` contains `NO_SQLITE_IN_APK`; version
+  `5.5.1+418`.
+- **APK**: `startup_release_apk.sh` runs `bin/release --dry-run` with a throwaway key in a temp
+  HOME (never the real key, never `/srv/www`). `unzip -l` must list `lib/arm64-v8a/libsqlite3.so`,
+  and `libsqlite3.so` for every ABI that has `libflutter.so`.
+- **Dart** (`dart/startup_guard_test.dart`, 6 tests, needs only `struct/startupGuard.dart`): a
+  throwing essential step shows "Clarity could not start" with the first line, Copy details and Try
+  again; a throwing optional step falls back and the app opens; Try again reruns; an uncaught error
+  before the first frame shows the screen, after it does not.
