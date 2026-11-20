@@ -265,3 +265,26 @@ Run: `bash .den/checks/check_den_hook.sh` (about 6-10 minutes; most of it is `bi
   refreshing while open; `getPackagesForUid`/`GET_SIGNING_CERTIFICATES` for the real den-app
   (package visibility is via `<queries>`); two engines briefly open on one database when the app
   opens while the headless engine is still alive (SQLite locking, not tested).
+
+# pair-app (2026-11-20): what `check_pair_app.sh` pins
+
+Run: `bash .den/checks/check_pair_app.sh` (a few minutes; most of it is `flutter build apk --debug`).
+Every way of pairing ends in `redeemProvisionLink` (`lib/widgets/clarityProvision.dart`), the path a
+clarity://provision link already took, so success and failure show the same messages.
+
+- **Source:** `android.permission.CAMERA` in the manifest (plus `uses-feature camera required=false`);
+  `mobile_scanner` (7.5.x, CameraX + ML Kit) in pubspec.yaml and pubspec.lock; `lib/pages/clarityPairPage.dart`
+  titled "Pair with red" with a `MobileScanner(` and a plain message on `permissionDenied`; scan and type
+  both pass `redeem: redeemProvisionLink`; one-tap paste via `Clipboard.getData`; `openClarityPairPage` from
+  `accountAndBackup.dart` (the login button when not paired) and `onBoardingPage.dart` (last page, when not
+  paired); handleProvisionLink still parses with `parseProvisionLink`, as does `lib/struct/clarityPairInput.dart`;
+  no print/log of code, token or the raw text in the new files; `version: 5.6.0+420`.
+- **Dart** (`dart/pair_app_test.dart`, >= 9): a typed bare code is normalised like red's `normalize_code`
+  and redeems against `ClarityServer.kServerUrl`; a typed link uses its code and the default or its red
+  `url=`; a scanned link redeems with its base URL; scanned non-Clarity text (a URL, a Wi-Fi QR, plain words)
+  is refused as "Not a Clarity pairing code"; a clarity link pointing off red is "Pairing link not usable";
+  the form's Pair, scan and paste buttons.
+- **APK:** the debug APK carries libsqlite3.so for every ABI that ships libflutter.so, and asks for CAMERA.
+- **Not verified (needs a phone):** the camera opening, the permission prompt and its denial screen, and a
+  real QR being read off a screen; a real redeem against red from the new screen.
+- check_den_hook.sh pins `5.6.0+419`, so it now fails on its version line only.

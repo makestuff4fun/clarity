@@ -28,10 +28,12 @@ Future<void> handleProvisionLink(Uri uri) async {
     ));
     return;
   }
-  await _redeem(link);
+  await redeemProvisionLink(link);
 }
 
-Future<void> _redeem(ProvisionLink link) async {
+/// Redeems a parsed pairing request: the one path every way of pairing
+/// (link, scanned QR, typed or pasted code) ends in.
+Future<void> redeemProvisionLink(ProvisionLink link) async {
   final BuildContext? context = navigatorKey.currentContext;
   if (context != null) openLoadingPopup(context);
   try {
@@ -72,7 +74,7 @@ Future<void> _redeem(ProvisionLink link) async {
       onSubmitLabel: "Try again",
       onSubmit: () {
         popRoute(null);
-        _redeem(link);
+        redeemProvisionLink(link);
       },
       onCancelLabel: "cancel".tr(),
       onCancel: () => popRoute(null),

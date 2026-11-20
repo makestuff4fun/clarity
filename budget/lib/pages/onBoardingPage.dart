@@ -6,6 +6,8 @@ import 'package:budget/struct/databaseGlobal.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/button.dart';
+import 'package:budget/pages/clarityPairPage.dart';
+import 'package:budget/struct/backend/claritySyncBackend.dart';
 import 'package:budget/widgets/importDB.dart';
 import 'package:budget/widgets/currencyPicker.dart';
 import 'package:budget/widgets/framework/popupFramework.dart';
@@ -451,6 +453,15 @@ class OnBoardingPageBodyState extends State<OnBoardingPageBody> {
             },
             text: "restore-a-backup".tr(),
           ),
+          // Not paired with red yet: pair now (scan the QR on a screen, or
+          // type the code) so backups start from the first day.
+          if (!clarityPaired) ...[
+            SizedBox(height: 10),
+            LowKeyButton(
+              onTap: () => openClarityPairPage(context),
+              text: "Pair with red",
+            ),
+          ],
         ],
       ),
     ];

@@ -32,6 +32,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:budget/struct/backend/claritySyncBackend.dart';
+import 'package:budget/pages/clarityPairPage.dart';
 import 'package:budget/struct/backend/syncBackend.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:universal_html/html.dart' as html;
@@ -554,6 +555,13 @@ class AccountLoginButtonState extends State<AccountLoginButton> {
   }
 
   void loginWithSync({VoidCallback? onNext}) {
+    // Not paired with red yet: signing in means pairing, so open that screen.
+    if (syncBackend is ClaritySyncBackend && !clarityPaired) {
+      openClarityPairPage(widget.navigationSidebarButton
+          ? navigatorKey.currentContext ?? context
+          : context);
+      return;
+    }
     signInAndSync(
       widget.navigationSidebarButton
           ? navigatorKey.currentContext ?? context
