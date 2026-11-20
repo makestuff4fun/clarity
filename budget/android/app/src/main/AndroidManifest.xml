@@ -6,6 +6,8 @@
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
   <queries>
+    <!-- den-app, the one caller of the den hook (DenHookProvider checks its certificate) -->
+    <package android:name="com.hanquest.den" />
     <!-- If your app opens https URLs -->
     <intent>
       <action android:name="android.intent.action.VIEW" />
@@ -98,6 +100,13 @@
             </intent-filter>
         </service>
         <receiver android:exported="false" android:name=".update.InstallStatusReceiver" />
+        <!-- The den-app hook (den-app docs/MONEY.md). Exported with NO permission attribute on
+             purpose: den-app and Clarity have different keys, so DenHookProvider checks the
+             caller's package and signing certificate in code on every call. -->
+        <provider
+            android:name=".den.DenHookProvider"
+            android:authorities="com.clarity.finance.den"
+            android:exported="true" />
         <receiver android:name="PlusWidgetProvider"
             android:exported="true" android:label="Transaction Shortcut">
             <intent-filter>

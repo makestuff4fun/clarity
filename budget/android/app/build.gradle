@@ -35,6 +35,11 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        // The den hook's adb-shell allowance is in src/debug only; release and profile allow nobody.
+        debug.java.srcDirs += 'src/debug/kotlin'
+        profile.java.srcDirs += 'src/profile/kotlin'
+        release.java.srcDirs += 'src/release/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
     }
 
     defaultConfig {
@@ -88,6 +93,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
     implementation 'androidx.window:window:1.3.0'
     implementation 'androidx.window:window-java:1.3.0'
 

@@ -189,3 +189,79 @@ build, a few minutes, plus `flutter test` on the startup guard).
   throwing essential step shows "Clarity could not start" with the first line, Copy details and Try
   again; a throwing optional step falls back and the app opens; Try again reruns; an uncaught error
   before the first frame shows the screen, after it does not.
+
+---
+
+# den-hook (2026-11-20): what `check_den_hook.sh` pins
+
+Contract: den-app `docs/MONEY.md`, "The hook, as pinned (2026-11-20)". Nothing in it was renamed.
+Run: `bash .den/checks/check_den_hook.sh` (about 6-10 minutes; most of it is `bin/release --dry-run`).
+
+## Pins
+
+- **Source:** `den_hook_manifest.py`: `.den.DenHookProvider` exported at `com.clarity.finance.den`,
+  no `permission`/`readPermission`/`writePermission`/`grantUriPermissions`; no exported component
+  beyond the six Clarity had before (MainActivity, four widget receivers, the notification
+  listener); `<queries>` names `com.hanquest.den`. `DenHookCaller.kt` pins the package and
+  `DEN_CERT_SHA256 = 1931299e6edfeec066087b128e0af467e702f4e48836fde8df6adbe7f35a7a07`; the
+  provider reads `signingCertificateHistory`; `call()` checks `Binder.getCallingUid()` before any
+  work. The shell allowance is in `src/debug` only; `src/release` and `src/profile` answer `false`.
+  `schemaVersionGlobal = 48`; `tables.dart` never mentions the hook; `denHook.dart` writes through
+  `createOrUpdateTransaction`/`deleteTransaction`, matches with `getMainAndSubcategoryFromParams`
+  and has no hand-written SQL. `version: 5.6.0+419`.
+- **Dart** (`dart/den_hook_test.dart`, >= 12 tests, in-memory FinanceDatabase): hello
+  `{ok, version, version_code, api: 1}`; add twice with one id = one row and the same answer;
+  sign rule (expense stored negative, income positive, answer positive); names match like the add
+  link (exact, case-insensitive, substring; pk first); unknown category/subcategory/account, no
+  category, a non-positive amount or no id = `bad_args` with nothing saved and no category made;
+  remove of a row not from the hook = `not_found`, remove writes a delete log, a second remove is
+  `not_found` and a later add with that id is refused; recent newest first with the caller's id
+  (null for Clarity's own rows), limit capped at 100; month in the local zone (rows at 00:30 on the
+  1st and 23:00 on the 30th count, 00:01 on the next 1st does not), by_category sorted by spent;
+  categories mains in `order` each followed by its subcategories (`parent_pk`); accounts with the
+  default; nothing the app prints during a call escapes; the id file survives a new DenHook.
+- **JVM** (`DenHookCallerTest`, >= 6, `gradle --offline :app:testReleaseUnitTest`): the pinned
+  constants; wrong cert, wrong package, no package, no certs = denied; the shell only with the
+  debug allowance; a pinned cert anywhere in a rotation history = allowed. Robolectric is not
+  used: its android-all jars are not in the offline gradle cache, so the PackageManager lookup
+  (`DenHookProvider.certsOf`) is not under test; the pure rule is.
+- **APK:** `clarity-5.6.0.apk`; `libsqlite3.so` for every ABI with `libflutter.so` (check_startup's
+  rule, which check_startup.sh itself now fails on only because it pins 5.5.1); the built manifest
+  has the authority; the dex carries the pinned digest and NOT `den-hook-debug-shell-allowance`.
+
+## Choices
+
+- **Background path.** `DenHookProvider.call` (binder thread) checks the caller, then
+  `DenHookEngine.call` posts to the main looper and waits at most 10 s (`busy` after). If
+  MainActivity has attached its engine (`configureFlutterEngine` -> `attachUi`), the call goes to
+  the app's own isolate over the MethodChannel `com.clarity.finance/den_hook`: the same
+  FinanceDatabase instance does the write, so drift's streams refresh the open lists with no
+  restart and there is one writer. Otherwise it starts a headless `FlutterEngine` on the Dart
+  entrypoint `denHookMain` (main.dart: preferences, database, settings, backends, time zone; no
+  runApp, no activity, so no window comes to the front). Dart registers the channel handler only
+  once the database is open; until then the call sees "not implemented" and retries every 100 ms.
+  The headless engine is destroyed after 120 s idle or when the app's engine attaches with no
+  call in flight. In Dart, `DenHook` queues calls one at a time. After a write `clarityAutoBackup()`
+  runs (it throttles itself, as on app open). Every call runs in a zone whose `print` goes
+  nowhere, because the app's own code prints rows (deleteTransaction prints the deleted row).
+- **Where the id lives.** `den_hook_ids.json` in the app documents directory next to `db.sqlite`:
+  `{"v":1,"ids":{"<caller id>":{"pk":"<transactionPk>","removed"?:true}}}`, written to `.tmp`
+  and renamed. The pk is a fresh UUID chosen and saved BEFORE the insert (`insert: false` keeps
+  it; `createOrUpdateTransaction` then insertOrReplaces), so a retry after a crash between the two
+  writes the same row, never a second. A removed id stays as a tombstone so a late retry cannot
+  resurrect it. No schema, backup or Cashew-import change; a restored backup just leaves stale
+  entries, which answer as "not saved" / `not_found`.
+- **Matching.** `resolveDenHookCategory` feeds appLinks.dart's `getMainAndSubcategoryFromParams`
+  (pk when the value is an existing pk, else the name) without a title, so it never falls back to
+  title matching; then anything unresolved, a subcategory not under the named category, or
+  category `"0"` (balance correction) is `bad_args`. Accounts: pk, else `getRelatingWallet`; left
+  out = `selectedWalletPk` (what the add link uses), and that one is `default: true` in `accounts`.
+- **Shapes.** `recent` is every paid row (not only hook rows), newest first; `month` counts rows by
+  the money-summary rules above (paid, category != "0", no objective loan, type not credit/debt)
+  and sums amounts as stored: no currency conversion (out of scope), `currency` is the default
+  account's. `methodAdded` is `appLink`, an existing value.
+- **Not verified (needs a phone):** the headless engine actually starting from a cold process and
+  answering inside 10 s; plugins attaching without an activity; no window appearing; the UI
+  refreshing while open; `getPackagesForUid`/`GET_SIGNING_CERTIFICATES` for the real den-app
+  (package visibility is via `<queries>`); two engines briefly open on one database when the app
+  opens while the headless engine is still alive (SQLite locking, not tested).

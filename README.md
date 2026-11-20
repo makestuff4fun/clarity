@@ -206,6 +206,54 @@ One test skips unless pointed at a real database export:
 LD_LIBRARY_PATH=/tmp/sqlite-shim BACKUP=../cashew-db-v48-*.sql flutter test
 ```
 
+## The den-app hook (5.6.0)
+
+den-app (`com.hanquest.den`, Brian's phone hub) can add and read expenses without opening
+Clarity, so a coffee is recorded in two taps. The contract is pinned in den-app
+`docs/MONEY.md`, "The hook, as pinned (2026-11-20)"; the full app stays the owner of the data,
+its backups and everything advanced.
+
+- **What:** one exported content provider, `content://com.clarity.finance.den`, used only through
+  `ContentResolver.call` with seven methods: `hello`, `add`, `remove`, `recent`, `categories`,
+  `accounts`, `month`. The request is a JSON string in `arg`; the answer is a Bundle whose one
+  string, `json`, is `{"ok": true, ...}` or `{"ok": false, "error": "denied|bad_args|not_found|busy|failed", ...}`.
+- **Who may call:** only `com.hanquest.den` signed with den-app's release key (certificate SHA-256
+  `1931299e…a7a07`, rotated keys included). The manifest has no permission attribute (the two apps
+  have different keys); `DenHookProvider` checks `Binder.getCallingUid()`'s packages and signing
+  certificates in code on every call and answers `denied` to anyone else.
+- **How it runs:** the call is handed to Clarity's own Dart code (`budget/lib/struct/denHook.dart`):
+  the running app's engine when Clarity is open (its lists update at once), otherwise a headless
+  Flutter engine on the `denHookMain` entrypoint, with no window. It writes through the same
+  `createOrUpdateTransaction` as the add screen. After 10 s the answer is `busy`.
+- **The caller's id** (`add` is safe to repeat; `remove` only touches rows that came in through the
+  hook) lives in `den_hook_ids.json` next to `db.sqlite`, not in the database: the schema (48), the
+  backup and the Cashew import are unchanged.
+
+### Trying it with adb
+
+From the shell this is **denied by design**, in a release build:
+
+```bash
+adb shell content call --uri content://com.clarity.finance.den --method hello
+# Result: Bundle[{json={"ok":false,"error":"denied",...}}]
+```
+
+A **debug** build (`flutter build apk --debug`, or `flutter run`) also lets the adb shell uid in
+(`budget/android/app/src/debug/kotlin/.../DenHookBuild.kt`), so the same commands answer:
+
+```bash
+adb shell content call --uri content://com.clarity.finance.den --method hello
+adb shell content call --uri content://com.clarity.finance.den --method categories --arg '{}'
+adb shell content call --uri content://com.clarity.finance.den --method add \
+  --arg '{"id":"test-1","amount":3.5,"category":"Dining","title":"adb test"}'
+adb logcat -s clarity-den    # ids and error codes only, never amounts or titles
+```
+
+That allowance exists only in the `src/debug` source set; `src/release` and `src/profile` hold a
+`DenHookBuild` that allows nobody. `.den/checks/check_den_hook.sh` builds the release APK and
+fails if the debug allowance's string is in its dex. Against a release build, exercise the hook
+from den-app itself.
+
 ## Releasing
 
 `bin/release` builds, signs and publishes the release APK. The version comes from

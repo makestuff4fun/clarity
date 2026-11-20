@@ -6,6 +6,10 @@ import 'package:budget/struct/iconObjects.dart';
 import 'package:budget/struct/keyboardIntents.dart';
 import 'package:budget/struct/logging.dart';
 import 'package:budget/struct/startupGuard.dart';
+import 'package:budget/struct/denHook.dart';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import 'package:budget/widgets/fadeIn.dart';
 import 'package:budget/struct/languageMap.dart';
 import 'package:budget/struct/initializeBiometrics.dart';
@@ -94,10 +98,46 @@ List<StartupStep> clarityStartupSteps() => [
         iconObjects.sort((a, b) => (a.mostLikelyCategoryName ?? a.icon)
             .compareTo((b.mostLikelyCategoryName ?? b.icon)));
       }, essential: false),
+      StartupStep("den hook", () async {
+        if (!kIsWeb && Platform.isAndroid) {
+          registerDenHookChannel(
+              ServicesBinding.instance.defaultBinaryMessenger,
+              await clarityDenHook());
+        }
+      }, essential: false),
       StartupStep("refresh rate", () {
         setHighRefreshRate();
       }, essential: false),
     ];
+
+/// The den-app hook (struct/denHook.dart) over this app's own database.
+Future<DenHook> clarityDenHook() async {
+  final dir = await getApplicationDocumentsDirectory();
+  return DenHook(
+    ids: DenHookFileIdStore(File(dir.path + "/den_hook_ids.json")),
+    version: () => packageInfoGlobal?.version ?? "",
+    versionCode: () => int.tryParse(packageInfoGlobal?.buildNumber ?? "") ?? 0,
+    afterWrite: () => clarityAutoBackup(),
+  );
+}
+
+/// The headless entrypoint DenHookProvider starts when den-app calls and Clarity is not
+/// open: no runApp, no window. Opens what the add path needs, then answers the channel.
+@pragma('vm:entry-point')
+void denHookMain() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  const wanted = {"preferences", "database", "settings", "backends", "time zone"};
+  for (final step in clarityStartupSteps().where((s) => wanted.contains(s.name))) {
+    try {
+      await step.run();
+    } catch (e, stack) {
+      logStartupError("den hook startup " + step.name, e, stack);
+      if (step.essential) return; // the provider answers busy after 10 s
+    }
+  }
+  registerDenHookChannel(
+      ServicesBinding.instance.defaultBinaryMessenger, await clarityDenHook());
+}
 
 GlobalKey<_InitializeAppState> appStateKey = GlobalKey();
 GlobalKey<PageNavigationFrameworkState> pageNavigationFrameworkKey =

@@ -2,6 +2,7 @@ package com.clarity.finance
 
 import android.os.Handler
 import android.os.Looper
+import com.clarity.finance.den.DenHookEngine
 import com.clarity.finance.update.ApkInstaller
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -11,6 +12,8 @@ import java.io.File
 class MainActivity: FlutterFragmentActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // The den hook answers in this engine while Clarity is open, so its lists update at once.
+        DenHookEngine.attachUi(flutterEngine)
         // The self-update: Dart downloads and sha256-verifies the APK, this hands it to PackageInstaller.
         // "install" {path} answers true once the session is committed, false when Clarity may not
         // install apps yet (the setting is opened for Brian).
@@ -34,5 +37,10 @@ class MainActivity: FlutterFragmentActivity() {
                     }
                 }.start()
             }
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        DenHookEngine.detachUi()
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 }
