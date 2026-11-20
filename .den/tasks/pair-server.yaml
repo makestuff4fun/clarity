@@ -1,0 +1,33 @@
+title: "clarity-server: `clarity device pair` can show the pairing link as a QR code"
+priority: 12
+model: opus
+provider: claude-main
+runaway: {minutes: 120}
+needs: []
+context: [README.md, server/clarity_server/cli.py, server/clarity_server/devices.py, server/requirements.txt, server/tests/test_server.py, .den/checks/server_common.py, .den/checks/NOTES.md]
+protected: [.den/tasks/**, .den/project.yaml, .den/setup.sh, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh,
+            .den/checks/check_app_sync.sh, .den/checks/check_startup.sh, .den/checks/check_server.py, .den/checks/check_money_summary.py, budget/**]
+done_when: python3 .den/checks/check_pair_qr.py
+do: |
+  THE JOB
+  `clarity device pair NAME` prints a one-time code and a clarity://provision link (server/clarity_server/cli.py).
+  Add a `--qr` flag that also prints that link as a QR code drawn in the terminal (unicode half-blocks, readable
+  by a phone camera at normal terminal size), and `--qr-file PATH` that writes it as a PNG or SVG. With --json
+  the output stays pure JSON (no QR drawn). Use a small pure-Python encoder such as segno (no heavy deps); add it
+  to server/requirements.txt and say what the managing agent must add to .den/server-requirements.txt, which you
+  cannot edit. Without --qr nothing changes.
+
+  THE WHY
+  Brian: "We should make it so clarity can pair. Open link or scan code etc." The app is getting a scan screen
+  (separate task); this is the code it scans.
+
+  GUARDRAILS
+  - Do not touch budget/. The code stays one-time and 10 minutes; do not change devices.py rules.
+  - Never log or store the code beyond what the command already does. Tests use fake codes only.
+  - NEVER feed a script through a heredoc. Stage files by name.
+
+  DONE MEANS
+  - `python3 .den/checks/check_pair_qr.py` (yours to write; fails on today's tree) exits 0: it runs the pair
+    command with --qr against a temp database, decodes or structurally validates the QR so it carries exactly the
+    printed link, checks --json stays valid JSON, and that the PNG/SVG file is written. Add to NOTES.md.
+  - Report in 2 bullets: the library chosen, and the line the managing agent must add to .den/server-requirements.txt.
