@@ -1,0 +1,47 @@
+title: "Clarity app: pair by scanning a QR code or typing the code, not only by opening a link"
+priority: 12
+model: opus
+provider: claude-main
+runaway: {minutes: 180}
+needs: []
+context: [README.md, budget/pubspec.yaml, budget/lib/widgets/clarityProvision.dart, budget/lib/struct/backend/clarityServer.dart,
+          budget/lib/widgets/accountAndBackup.dart, budget/android/app/src/main/AndroidManifest.xml, .den/checks/flutter_common.sh, .den/checks/NOTES.md]
+protected: [.den/tasks/**, .den/project.yaml, .den/setup.sh, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh,
+            .den/checks/check_app_sync.sh, .den/checks/check_startup.sh, .den/checks/check_server.py, .den/checks/check_money_summary.py, server/**]
+done_when: bash .den/checks/check_pair_app.sh
+do: |
+  THE JOB
+  Clarity pairs with red today only when the phone opens a clarity://provision?code=CODE[&url=URL] link
+  (handleProvisionLink in budget/lib/widgets/clarityProvision.dart; the server redeems it at /api/v1/pair).
+  Add the other ways in, all ending in the same redeem path (parseProvisionLink's host rules stay the gate):
+  1. A "Pair with red" screen reachable from where backup/account settings live (accountAndBackup.dart) and
+     from the first-run state when the app is not paired.
+  2. SCAN: a camera button that scans a QR code whose text is a clarity://provision link, and pairs. Use a
+     maintained Flutter scanner package (for example mobile_scanner); add the CAMERA permission, ask for it at
+     the moment of tapping, and say plainly if it is denied. A QR that is not a Clarity link is refused with a
+     named message, never silently ignored.
+  3. TYPE: a field to type or paste either the bare one-time code or a full clarity:// link; both work.
+     Pasting from the clipboard is one tap.
+  4. Success and failure use the messages handleProvisionLink already shows. No code or token is ever logged.
+  Keep the link route working exactly as it does.
+  Version: bump the build number (+1) in budget/pubspec.yaml; do NOT publish, the managing agent runs bin/release.
+
+  THE WHY
+  Brian: "We should make it so clarity can pair. Open link or scan code etc." He sets the phone up in person next
+  to a screen, so a QR on the screen beats sending himself a link.
+
+  GUARDRAILS
+  - Do not touch server/, the signing setup or release.env. Do not run bin/release without --dry-run.
+  - The release APK must still bundle libsqlite3.so (clarity-startup fixed this; do not regress it) and a
+    camera package must not break `flutter test` on red.
+  - pub get uses --enforce-lockfile where a lock exists; commit pubspec.lock only for your own dependency.
+    budget/pubspec.lock is dirty in the main checkout for reasons not yours.
+  - NEVER feed a script through a heredoc. Write it to a file. One Flutter/Gradle build at a time.
+  - Never put a real code or token in a test, log or commit. Stage files by name.
+
+  DONE MEANS
+  - `bash .den/checks/check_pair_app.sh` (yours to write; it must fail on today's tree) exits 0: source checks
+    for the camera permission and the screen, then widget/unit tests that a bare code, a full link, a scanned
+    link and a non-Clarity QR text each end as expected (redeem called with the right code and base URL, or
+    the named refusal), and a debug APK build still contains libsqlite3.so. Add it to .den/checks/NOTES.md.
+  - Report in 3 bullets: what was added, which scanner package, what was not verified on a real camera.
