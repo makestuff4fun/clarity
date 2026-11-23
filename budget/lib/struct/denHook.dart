@@ -1,4 +1,4 @@
-// The den-app hook, Dart side (Clarity 5.6.0). Contract: den-app docs/MONEY.md,
+// The den-app hook, Dart side (Clarity 5.6.0; api 2 in 5.7.0). Contract: den-app docs/MONEY.md,
 // "The hook, as pinned (2026-11-20)". Do not rename methods, keys or error codes.
 //
 // Android's DenHookProvider (content://com.clarity.finance.den) checks the caller, then hands
@@ -20,6 +20,7 @@ import 'package:budget/database/tables.dart';
 import 'package:budget/pages/addTransactionPage.dart'
     show addAssociatedTitles, MainAndSubcategory;
 import 'package:budget/struct/databaseGlobal.dart';
+import 'package:budget/struct/denFavorites.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/widgets/util/appLinks.dart'
     show getMainAndSubcategoryFromParams;
@@ -27,7 +28,9 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/services.dart';
 
 const String kDenHookChannel = "com.clarity.finance/den_hook";
-const int kDenHookApi = 1;
+// 2 since 5.7.0: favorites, favorite_save, favorite_remove, suggestions, suggestion_dismiss
+// (denFavorites.dart). Everything of api 1 is unchanged.
+const int kDenHookApi = 2;
 
 class DenHookError implements Exception {
   final String code; // denied, bad_args, not_found, busy, failed
@@ -115,6 +118,9 @@ class DenHook {
   /// Runs after a write: the app passes clarityAutoBackup (it throttles itself).
   final void Function()? afterWrite;
 
+  /// api 2: favorites and suggestions.
+  final DenFavorites favorites = DenFavorites();
+
   DenHook({
     required this.ids,
     required this.version,
@@ -178,6 +184,17 @@ class DenHook {
         return _accounts();
       case "month":
         return _month(req);
+      // api 2 (5.7.0): favorites and suggestions, kept in db.sqlite by denFavorites.dart.
+      case "favorites":
+        return favorites.list(req);
+      case "favorite_save":
+        return favorites.save(req, afterWrite);
+      case "favorite_remove":
+        return favorites.remove(req, afterWrite);
+      case "suggestions":
+        return favorites.suggestions(req);
+      case "suggestion_dismiss":
+        return favorites.dismiss(req, afterWrite);
     }
     throw DenHookError("bad_args", "Unknown method.");
   }

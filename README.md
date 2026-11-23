@@ -249,6 +249,44 @@ adb shell content call --uri content://com.clarity.finance.den --method add \
 adb logcat -s clarity-den    # ids and error codes only, never amounts or titles
 ```
 
+### Favorites and suggestions: hook api 2 (5.7.0)
+
+Pinned in den-app `docs/MONEY.md`, "Stage 3 ... favorites, kept in Clarity (hook api 2, Clarity
+5.7.0)". `hello` answers `api: 2`; everything above is unchanged. Five more methods on the same
+provider, with the same caller check and answer shape:
+
+- `favorites` `{now_ms?}`: `{ok, favorites: [{id, title, income, category, subcategory?, account?,
+  usual_amount, uses, last_used_ms}]}`. A favorite has no fixed amount: `usual_amount` is the most
+  frequent amount among the transactions that match it (same category, subcategory and title, ignoring
+  case and surrounding spaces; ties go to the most recent), null while nothing matches.
+- `favorite_save` `{id, category, subcategory?, title, income?, account?}`: a known id is replaced
+  (Edit); the same category, subcategory and title as another favorite answers that one; an unknown
+  category, subcategory or account, or an empty title, is `bad_args`.
+- `favorite_remove` `{id}` (`not_found` for an unknown id).
+- `suggestions` `{now_ms?, limit?}` (default 10, at most 30): groups of at least 3 matching transactions
+  in the whole history that are not a favorite and were not dismissed, with an opaque stable `key`.
+- `suggestion_dismiss` `{key}`: never suggested again.
+
+Both lists put first what is usually entered around `now_ms`: each matching transaction scores
+`max(0, 1 - minutes between the two times of day / 120) × (1 same weekday, 0.5 same kind of day
+(Mon–Fri or Sat–Sun), 0 otherwise)`; they are sorted by the sum, then by uses, then by the last use.
+
+They are kept in two plain SQLite tables inside `db.sqlite`, `den_favorites` and `den_dismissed`,
+created on the first api 2 call. They are not drift tables and the schema stays 48, so the backup
+(the whole file) carries them, 5.6.0 restores a 5.7.0 backup without noticing them, and a 5.6.0 backup
+or a Cashew import simply starts with none. Nothing in Clarity's own screens shows them.
+
+With a debug build:
+
+```bash
+adb shell content call --uri content://com.clarity.finance.den --method suggestions --arg '{"limit":5}'
+adb shell content call --uri content://com.clarity.finance.den --method favorite_save \
+  --arg '{"id":"fav-1","category":"Dining","title":"adb lunch"}'
+adb shell content call --uri content://com.clarity.finance.den --method favorites --arg '{}'
+adb shell content call --uri content://com.clarity.finance.den --method favorite_remove --arg '{"id":"fav-1"}'
+adb shell content call --uri content://com.clarity.finance.den --method suggestion_dismiss --arg '{"key":"<a key from suggestions>"}'
+```
+
 That allowance exists only in the `src/debug` source set; `src/release` and `src/profile` hold a
 `DenHookBuild` that allows nobody. `.den/checks/check_den_hook.sh` builds the release APK and
 fails if the debug allowance's string is in its dex. Against a release build, exercise the hook

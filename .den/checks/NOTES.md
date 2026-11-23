@@ -307,3 +307,80 @@ live code). Encoder: **segno 1.6.6** (pure Python, no deps), lazily imported in 
   check installs it once into `~/.local/share/clarity/check-segno-1.6.6` and sets PYTHONPATH for bin/clarity only;
   `server/tests/test_qr.py` skips without segno.
 - **Not verified (needs a phone):** a real camera reading the terminal drawing.
+
+# clarity-favorites (2026-11-23): what `check_favorites.sh` pins
+
+Contract: den-app `docs/MONEY.md`, "Stage 3 ... favorites, kept in Clarity (hook api 2, Clarity 5.7.0)", on
+top of "The hook, as pinned (2026-11-20)". Nothing in either was renamed or reshaped.
+Run: `bash .den/checks/check_favorites.sh` (about 8-12 minutes; most of it is the den-hook run's
+`bin/release --dry-run`).
+
+## Pins
+
+- **Source:** `denHook.dart` dispatches `favorites`, `favorite_save`, `favorite_remove`, `suggestions`,
+  `suggestion_dismiss` (to `struct/denFavorites.dart`); `kDenHookApi = 2`; `version: 5.7.0+421`;
+  `schemaVersionGlobal = 48` and `budget/lib/database` byte-identical to 5.6.0 (`git diff b5917ba`); no
+  change under `lib/pages`, `lib/widgets` or `AndroidManifest.xml` (nothing visible, no new component);
+  `den_favorites` created with `CREATE TABLE IF NOT EXISTS`; `denFavorites.dart` neither prints nor logs and
+  never writes Clarity's own tables; suggestions group in SQL; README describes api 2.
+- **Dart** (`dart/favorites_test.dart`, >= 14 tests, real FinanceDatabase): hello api 2; a new favorite
+  with no matches has `usual_amount: null, uses: 0, last_used_ms: null`; a known id replaces (Edit); the same
+  category+subcategory+title (any case, surrounding spaces) answers the existing one, while another title
+  or another subcategory is another favorite; `bad_args` for unknown category / subcategory / subcategory
+  of another category / account, empty or blank title, no id, no category, non-bool income, bad
+  `now_ms`/`limit`, with nothing saved and no category made; remove, then `not_found`; usual_amount =
+  most frequent, ties to the most recent; suggestions need 3 rows, skip favorites, keeping one
+  (favorite_save with its fields) removes it, removing the favorite brings the same key back; dismiss
+  holds across new rows and a new DenHook; the order cases (below); 20,000 rows under 2 s each on the
+  host; both backup directions (below); nothing printed.
+- **api 1:** `check_den_hook.sh` is run from a patched copy in a temp dir, changed ONLY where the
+  contract changes it: its version pins (`5.6.0+419` -> `5.7.0+421`, `clarity-5.6.0.apk` ->
+  `clarity-5.7.0.apk`) and the hello test's `"api": 1` -> `"api": 2` (exactly 2 lines of
+  `den_hook_test.dart`). Everything else, the JVM caller tests and the release APK (bin/release
+  --dry-run with a throwaway key; check_startup's libsqlite3.so-per-ABI rule) runs as written. The
+  protected original cannot pass as is: it already failed on main at `5.6.0+420`, and api 2 changes hello.
+
+## Choices
+
+- **Where they are kept: two plain SQLite tables inside db.sqlite**, `den_favorites(id PK, title,
+  title_key, income, category_fk, sub_category_fk, wallet_fk, saved_ms)` and `den_dismissed(key PK,
+  dismissed_ms)`, created with `CREATE TABLE IF NOT EXISTS` at the start of every api 2 call. Not drift
+  tables, no schema step, `user_version` stays 48. Why: the backup to red is the whole file's bytes
+  (`clarityAutoBackup` -> `getCurrentDBFileInfo`) and a restore replaces the file, so the tables travel
+  both ways with no code in the backup path. A drift table would need schema 49, and 5.6.0 cannot open a
+  file newer than its schema (README "Older Cashew versions"), which breaks the hard rule. The settings
+  JSON (which does travel) was the other candidate; it lives in SharedPreferences and is copied into the
+  file only before a backup, and SQL could not group against it. The side file `den_hook_ids.json` is
+  not in the backup at all. Proven by tests: (a) a 5.7.0 file with favorites and a dismissal, copied and
+  opened by `FinanceDatabase` exactly as 5.6.0 has it (lib/database unchanged, pinned), is user_version
+  48, `integrity_check` ok, every row of transactions/categories/wallets/budgets/objectives identical,
+  den tables still in the file, and back in 5.7.0 the favorite and the dismissal are there; (b) a 5.6.0
+  file (no den tables, which is also what a Cashew import yields after drift's own migration) opened by
+  5.7.0: favorites `[]`, suggestions found, a save works, those five tables byte-for-byte unchanged,
+  still 48; (c) tables dropped under a live hook (a restore while open) are recreated, not an error.
+  A failed `CREATE TABLE` touches nothing of 5.6.0's: there is no migration. Writes to these two tables
+  are hand-written SQL in denFavorites.dart; transactions are never written by api 2.
+- **Matching:** same `category_fk`, same `sub_category_fk` (NULL = NULL), and `lower(trim(name))` equal
+  (trim of space, tab, CR, LF), computed in SQLite for both sides so they always agree. "Taxi to JHH" and
+  "taxi to jhh " are one; "Taxi to JHH airport" is another; nothing is merged by similarity. Limit: SQLite's
+  `lower()` folds ASCII only (Chinese titles have no case; "É"/"é" stay apart). Rows used: paid, category
+  not "0", non-blank title. Account and income are not part of the match; a suggestion's title, income
+  and account are those of its newest row.
+- **Order:** per matching transaction, `closeness × day`: closeness = `max(0, 1 - d/120)` with d the
+  minutes between its time of day and now's (wrapping midnight), so only ±2 h counts; day = 1 same
+  weekday, 0.5 same kind of day (Mon-Fri vs Sat-Sun), 0 otherwise. Sorted by the sum, then uses, then
+  last use (favorites with nothing then by newest saved). The sum means a habit entered often near now
+  beats a rare one. Time of day uses now's UTC offset for the whole history (no DST in his zone; in a DST
+  zone a summer row reads one hour off in winter). Tested: 4 weeks of taxi to JHH 08:00 Mon-Fri (20),
+  taxi home 19:00 Mon-Sat (24), lunch 12:30 Mon-Fri (20), market Sunday 12:00 (4): Tue 08:00 -> taxi to
+  JHH first, Tue 19:00 -> taxi home, Tue 12:30 -> lunch, Sunday 12:30 -> market, taxi home, lunch, taxi
+  to JHH; 03:00 (nothing near) -> frequency.
+- **Cost:** one `GROUP BY category, subcategory, key` over transactions with the score computed per row
+  in SQL, then per shown group two small queries (latest row; usual amount `GROUP BY round(abs(amount),2)
+  ORDER BY count DESC, last DESC`). No index added (that would change the file 5.6.0 opens, harmlessly,
+  but it was not needed). Measured in the test, 20,000 generated rows, 500 titles, this build host:
+  suggestions(limit 30) 182 ms, favorites(10) 60 ms. The bound asserted is 2 s, a 5x margin under 10 s.
+- **Not verified (needs a phone):** the real timing on a mid-range phone; the five methods through the
+  provider and a headless engine with Clarity closed (the same channel as api 1, but not run on a device);
+  the backup actually uploaded to red carrying the tables and a restore from red bringing them back
+  (proven on the file, not through the server); den-app's host and Money 1.1.0 against this build.
