@@ -1,0 +1,87 @@
+title: "Clarity 5.7.1: the updater shows its download (progress, size, speed, time left) like den-app's"
+priority: 11
+model: opus
+provider: claude-main
+runaway: {minutes: 240}
+needs: []
+context: [README.md, budget/pubspec.yaml, budget/lib/struct/update/updates.dart, budget/lib/struct/update/updateChecker.dart,
+          budget/lib/pages/settingsPage.dart, bin/release, .den/checks/check_self_update.sh, .den/checks/check_startup.sh,
+          .den/checks/check_favorites.sh, .den/checks/NOTES.md,
+          /home/bairui/projects/den-app/app/src/main/kotlin/com/hanquest/den/update/UpdateSection.kt,
+          /home/bairui/projects/den-app/app/src/main/kotlin/com/hanquest/den/update/Updates.kt,
+          /home/bairui/projects/den-app/app/src/main/kotlin/com/hanquest/den/downloads/DownloadProgress.kt]
+protected: [.den/tasks/**, .den/project.yaml, .den/setup.sh, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh,
+            .den/checks/check_app_sync.sh, .den/checks/check_server.py, .den/checks/check_money_summary.py, .den/checks/check_startup.sh,
+            .den/checks/check_den_hook.sh, .den/checks/check_favorites.sh, server/**]
+done_when: bash .den/checks/check_update_progress.sh
+do: |
+  THE JOB
+  Brian, 2026-11-24, from his phone, after updating Clarity to 5.7.0: "clarity updater didn't show download
+  others and speed like our other apps, can fix this with the next update?" (he means the download's progress
+  and speed). Today Clarity's in-app update (budget/lib/struct/update/updates.dart, in context) shows one
+  snackbar, "Downloading Clarity 5.7.0…", and then nothing until Android's install prompt; the APK is about
+  117 MB and he is in China on a slow, uneven link, so for minutes he cannot tell whether it is working.
+  den-app, his hub app, shows a live block for the same job (its UpdateSection.kt, Updates.kt and
+  DownloadProgress.kt are in context as the model: read how it words and computes things; Clarity is Flutter,
+  so nothing is shared, only the behaviour). Make Clarity's updater show the same things, in Clarity's own
+  look:
+  - WHILE DOWNLOADING, one place he can see without hunting (a sheet or popup that opens when he taps Update,
+    in Clarity's existing popup style; and the same block in Settings beside "Check for updates" if he closes
+    it: the download goes on and reopening shows where it is): a progress bar; the percent; done / total size
+    ("42.1 / 116.6 MB"); the speed, smoothed so it does not jump every tick ("1.2 MB/s"); the time left once
+    it can be estimated ("about 1 min left"), nothing before that. Updated about twice a second, not per chunk.
+  - WHEN IT STALLS (no bytes for several seconds): the block says "Waiting for the network" and keeps the
+    bytes so far; when bytes flow again it carries on. Pin the number of seconds.
+  - WHEN IT FAILS: a plain line saying what happened and a Retry button. Retry RESUMES from the bytes already
+    on disk when the server allows a Range request (red's feed does) and starts over cleanly when it does
+    not; a resumed file must still pass the existing size and sha256 verification, and a file that fails
+    verification is deleted and never offered for install.
+  - CANCEL stops the download and removes the partial file; "Later" on the first popup stays as it is.
+  - WHEN IT IS DOWN AND VERIFIED: the block says so and the install starts as today; if Android has not been
+    allowed to install from Clarity, today's "Allow Clarity to install apps" line stays, with an Install
+    button on the block so he does not have to download again.
+  - Leaving the screen, opening another page of Clarity or rotating does not stop or restart the download.
+    (Surviving the app being killed is NOT asked.)
+  - The check for updates itself, the feed, the verification and the install channel are unchanged.
+    check_self_update.sh (protected, in context) must still pass; if one of its pins stands in the way of the
+    above, stop and say exactly which.
+  What you decide (say each under "## Choices" in .den/checks/NOTES.md): where the block lives and what a
+  second tap on "Check for updates" does while a download runs; the smoothing (den-app's is in
+  DownloadProgress.kt); the stall threshold; how sizes and speeds are rounded; whether the partial file is
+  kept across an app restart.
+  Also:
+  - Version 5.7.1 (the next build number after the one in budget/pubspec.yaml). Do NOT publish: the managing
+    agent runs bin/release and installs it.
+  - .den/checks/check_update_progress.sh (yours; the done_when), failing on today's tree: flutter tests of the
+    pure parts with a fake clock and a local test HTTP server (progress events with the right bytes and
+    total; smoothed speed; time left; a stall and its recovery; a failure then Retry resuming with a Range
+    request; a server without Range starting over; a resumed file passing sha256 and a corrupted one refused
+    and deleted; Cancel removing the partial file), widget tests of the block (the five things shown while
+    downloading, the stalled line, the failed line with Retry, the verified state), check_self_update.sh and
+    check_favorites.sh still green, and `bin/release --dry-run` still passing check_startup's APK rule. Add
+    its pins to .den/checks/NOTES.md.
+  - Never hardcode a calendar day or wall-clock time in a test.
+
+  THE WHY
+  An update he cannot see moving looks broken, and on his link it takes minutes. His other apps show the
+  bar, the size, the speed and the time left; he wants one behaviour everywhere, and he should never have to
+  wonder whether to wait or try again.
+
+  THE GUARDRAILS
+  - The download must stay as safe as today: https feed only, the sha256 and signature checks exactly as they
+    are, no install of an unverified or partial file under any path (including Retry and resume).
+  - Do not touch server/, the den hook, the favorites code or the earlier checks. Do not change signing.
+    Never print a password or key. No logging of his money data (this task has no reason to read it).
+  - Do not run bin/release without --dry-run. Do not write under /srv/www. Do not install anything on a phone.
+  - One Flutter/Gradle build at a time; never `./gradlew --stop`.
+  - budget/pubspec.lock: commit a change only if your dependency change needs it, and say so. Prefer no new
+    dependency.
+  - NEVER run a command that feeds a script through a heredoc (`python3 - <<EOF`, `bash <<EOF`, `cat <<EOF |`).
+    Write the script to a file and run the file.
+  - Wait for every background shell you started to finish before your verdict. Stage files by name.
+
+  DONE MEANS
+  - `bash .den/checks/check_update_progress.sh` exits 0 on your commit and you saw it fail before your change.
+  - Report in 3 bullets: where the block lives and what it shows, how resume and verification fit together,
+    and what is NOT verified (nobody has run this on a phone: say which parts only a real device can prove).
+    Before reporting, check each claim against a tool result from this session.
