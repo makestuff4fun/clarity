@@ -189,6 +189,7 @@ class MorePages extends StatelessWidget {
               icon: Icons.system_update_rounded,
               isOutlined: true,
             ),
+          if (selfUpdateSupported) updateProgressInSettings(),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [

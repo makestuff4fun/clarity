@@ -384,3 +384,81 @@ Run: `bash .den/checks/check_favorites.sh` (about 8-12 minutes; most of it is th
   provider and a headless engine with Clarity closed (the same channel as api 1, but not run on a device);
   the backup actually uploaded to red carrying the tables and a restore from red bringing them back
   (proven on the file, not through the server); den-app's host and Money 1.1.0 against this build.
+
+# clarity-update-progress (2026-11-24): what `check_update_progress.sh` pins
+
+Brian, after updating to 5.7.0: "clarity updater didn't show download [progress] and speed like our other
+apps". Clarity 5.7.1+422 shows the download the way den-app's UpdateSection / DownloadProgress.kt do, in
+Clarity's own popup. Run: `bash .den/checks/check_update_progress.sh` (long: check_self_update.sh and the
+den-hook run inside check_favorites.sh each do a `bin/release --dry-run`).
+
+## Pins
+
+- **Source:** `version: 5.7.1+422`; `budget/lib/struct/update/updateChecker.dart`, `budget/android`,
+  `server/` and `dart/update_checker_test.dart` byte-identical to 5.7.0 (`git diff 1c00192`): the check,
+  the feed, the sha256 rule, the install channel and signing are unchanged; `settingsPage.dart` gains
+  exactly one line (`if (selfUpdateSupported) updateProgressInSettings(),`); `UpdateProgressRules`
+  holds `tickMs = 500`, `smoothWindowMs = 3000`, `stallMs = 5000`; the new files neither print nor log.
+- **Dart** (`dart/update_progress_test.dart`, >= 20 tests, fake clock, a local `HttpServer` on 127.0.0.1):
+  formatting; the smoothed speed (an idle half-second does not drop it to 0); time left absent before 2 s
+  and two samples, then remaining / speed; progress events with done 100000 of total 300000 at a pause,
+  then verified, installed, sha256 equal; a stall shown at exactly 5000 ms (not 4999) with the bytes kept,
+  then verified; a stall then bytes again goes back to `downloading` at 150000 of 300000; 60 s without a
+  byte fails the attempt and keeps the partial file; a dropped connection at 120000, then Retry sends
+  `Range: bytes=120000-`, gets 206 and the result passes sha256; a server ignoring Range answers 200 and
+  the file is rewritten from 0 (`restarted`), passing sha256; a corrupted 120000-byte partial file is
+  resumed, fails sha256, both files are deleted, nothing installed, and Retry then downloads it whole; a
+  wrong sha256 in the feed leaves nothing on disk; Cancel removes the partial file and clears the block;
+  not allowed to install: the verified APK waits behind Install, which hashes it again (a file changed
+  after verification is deleted and never handed over); plain http to anything but loopback is refused.
+  Widget tests: the five things while downloading (bar value, "36%", "42.1 / 116.6 MB", "1.2 MB/s",
+  "about 1 min left"), no speed / time left before they exist, "Waiting for the network" with the size
+  kept, the failed line with Retry, the verified state, the permission line with Install, idle shows nothing.
+  The test sets `HttpOverrides.global = null`: the widget binding otherwise answers every HttpClient with 400.
+- **check_self_update.sh** runs as written (it pins no version).
+- **check_favorites.sh** runs from a patched copy changed ONLY where 5.7.1 changes it (8 lines): its
+  version pins (`5.7.0+421` -> `5.7.1+422`, `clarity-5.7.0.apk` -> `clarity-5.7.1.apk`, both in its own
+  greps and in the den-hook copy it makes), the source path, and its "no screen changed since b5917ba"
+  rule, which excludes `settingsPage.dart` (the one-line change above is pinned instead). Through it
+  check_den_hook.sh, `bin/release --dry-run` with a throwaway key and check_startup's libsqlite3.so-per-ABI
+  rule run as written. The protected original cannot pass as is: it pins 5.7.0+421 and "nothing visible".
+
+## Choices
+
+- **Where the block lives:** one `UpdateDownloader` for the whole app (a top-level object in
+  `updates.dart`, not in a widget), so leaving Settings, opening another page or rotating neither stops nor
+  restarts it. Tapping Update opens a popup (`openPopupCustom`, Clarity's popup) with the live block and a
+  Close button; closing it (or tapping outside) leaves the download running. The same block sits in
+  Settings directly under "Check for updates" while anything is going (downloading, waiting, failed, or
+  verified waiting for permission) and is absent otherwise. "Later" is unchanged.
+- **A second tap on "Check for updates" while a download runs** (or waits for Retry / Install) does not
+  check again: it reopens the popup showing where it is.
+- **Smoothing:** den-app's rule. Samples are taken on each tick (every 500 ms); the speed is the bytes
+  received over the last 3 s (the oldest sample still covering the window) divided by the time since it.
+  Time left = remaining / that speed, shown only after 2 s of transfer and two samples, and not while
+  stalled. A stall clears the samples, so after it the speed and time left start again rather than
+  averaging the dead seconds.
+- **Stall threshold: 5 s** without a byte -> "Waiting for the network", bytes kept, bar kept (den-app uses
+  3 s; on his link 3 s gaps are ordinary, so 5 s says it only when it is real). **60 s** without a byte the
+  attempt is dropped and shown failed, so Retry appears instead of waiting forever.
+- **Rounding:** sizes in decimal MB with one decimal ("42.1 / 116.6 MB", as Android shows file sizes);
+  speed "1.2 MB/s" from 1 MB/s, whole "340 KB/s" below; percent floored (never 100% before the end); time
+  left "about N min left" from 60 s (minutes rounded), else "about N s left" rounded up to 5 s.
+- **Resume and verification:** the partial file is `clarity-<version>.apk.part` in the app's temp dir.
+  Retry (and a restart of the same version) sends `Range: bytes=<size on disk>-`; only a 206 whose
+  `Content-Range` starts at exactly that byte is appended; a 200 rewrites from 0; a 416 deletes and starts
+  over. Whatever the path, the whole finished file must have the size the server gave and the sha256 from
+  latest.json (hashed over the whole file, not only the new bytes); only then is it renamed to `.apk` and
+  handed to the unchanged install channel. A mismatch deletes both files. Install after "Allow Clarity to
+  install apps" hashes the `.apk` again before handing it over. The Android side still verifies the
+  signature as before. `UpdateChecker.download` (protected test) is unchanged and no longer called.
+- **The partial file across an app restart: kept**, for the same version only (files of any other version
+  in that dir are deleted on start). On his link a 117 MB file can take many minutes; resuming is safe
+  because sha256 decides. Android may clear the temp dir under storage pressure; then it starts over.
+- **Cancel** stops the request and deletes the `.part` and any `.apk`, and the block disappears.
+- **No new dependency;** `pubspec.lock` unchanged.
+- **Not verified (needs a phone):** the popup and Settings block on the real screen and theme; red's nginx
+  actually answering 206 to a Range request (tested against a local server only); the 500 ms repaint
+  while Settings stays open; rotation and moving between pages during a real download; the install
+  prompt and the "Allow Clarity to install apps" -> Install path on Android 16; speed and stall behaviour
+  over his real link.

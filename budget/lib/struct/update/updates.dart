@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
 import 'package:budget/struct/update/updateChecker.dart';
+import 'package:budget/struct/update/updateDownload.dart';
+import 'package:budget/struct/update/updateProgressBlock.dart';
 import 'package:budget/widgets/globalSnackbar.dart';
 import 'package:budget/widgets/openPopup.dart';
 import 'package:budget/widgets/openSnackbar.dart';
@@ -42,6 +44,11 @@ Future<void> checkForUpdatesManually(BuildContext context) async {
     openSnackbar(SnackbarMessage(title: "Updates are installed on Android only"));
     return;
   }
+  // A download is going (or waits for Retry / Install): show it rather than check again.
+  if (updateDownloader.snapshot.active) {
+    openUpdateProgress(context);
+    return;
+  }
   if (_checking) return;
   _checking = true;
   try {
@@ -72,36 +79,54 @@ void offerUpdate(BuildContext context, UpdateInfo info) {
     onSubmitLabel: "Update",
     onSubmit: () {
       popRoute(context);
-      _downloadAndInstall(info);
+      _downloadAndInstall(context, info);
     },
     onCancelLabel: "Later",
     onCancel: () => popRoute(context),
   );
 }
 
-Future<void> _downloadAndInstall(UpdateInfo info) async {
-  openSnackbar(SnackbarMessage(
-      title: "Downloading Clarity ${info.versionName}…",
-      icon: Icons.downloading_rounded));
-  try {
-    final dir = Directory("${(await getTemporaryDirectory()).path}/update");
-    if (await dir.exists()) await dir.delete(recursive: true);
-    final apk = await UpdateChecker(currentVersionCode: currentVersionCode)
-        .download(info, File("${dir.path}/clarity-update.apk"));
-    final started =
-        await updateChannel.invokeMethod<bool>("install", {"path": apk.path});
-    if (started != true) {
-      openSnackbar(SnackbarMessage(
-        title: "Allow Clarity to install apps",
-        description: "Then check for updates again",
-        icon: Icons.security_rounded,
-      ));
-    }
-  } catch (e) {
+Directory? _updateDir;
+
+/// The one download for the whole app: it lives here, not in a widget, so leaving the
+/// screen, opening another page or rotating neither stops nor restarts it.
+final UpdateDownloader updateDownloader = UpdateDownloader(
+  dir: () => _updateDir!,
+  install: (apk) async =>
+      await updateChannel.invokeMethod<bool>("install", {"path": apk.path}) == true,
+);
+
+/// The block in Settings, under "Check for updates" (nothing while no download is going).
+Widget updateProgressInSettings() => UpdateProgressBlock(
+      downloader: updateDownloader,
+      padding: const EdgeInsetsDirectional.symmetric(horizontal: 18, vertical: 10),
+    );
+
+/// The popup with the live block; closing it leaves the download running.
+void openUpdateProgress(BuildContext context) {
+  openPopupCustom(
+    context,
+    title: "Update",
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      UpdateProgressBlock(downloader: updateDownloader),
+      Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: TextButton(onPressed: () => popRoute(context), child: const Text("Close")),
+      ),
+    ]),
+  );
+}
+
+Future<void> _downloadAndInstall(BuildContext context, UpdateInfo info) async {
+  _updateDir ??= Directory("${(await getTemporaryDirectory()).path}/update");
+  final run = updateDownloader.start(info);
+  if (context.mounted) openUpdateProgress(context);
+  await run;
+  if (updateDownloader.snapshot.phase == UpdatePhase.needsPermission) {
     openSnackbar(SnackbarMessage(
-      title: "Update failed",
-      description: e.toString(),
-      icon: Icons.error_outline_rounded,
+      title: "Allow Clarity to install apps",
+      description: "Then tap Install under Check for updates",
+      icon: Icons.security_rounded,
     ));
   }
 }
