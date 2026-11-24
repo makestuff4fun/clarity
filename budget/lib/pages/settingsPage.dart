@@ -183,11 +183,15 @@ class MorePages extends StatelessWidget {
             ],
           ),
           if (selfUpdateSupported)
-            SettingsContainer(
-              onTap: () => checkForUpdatesManually(context),
-              title: "Check for updates",
-              icon: Icons.system_update_rounded,
-              isOutlined: true,
+            ListenableBuilder(
+              listenable: updateCheck,
+              builder: (context, _) => SettingsContainer(
+                onTap: () => checkForUpdatesManually(context),
+                title: "Check for updates",
+                description: updateCheck.status(),
+                icon: Icons.system_update_rounded,
+                isOutlined: true,
+              ),
             ),
           if (selfUpdateSupported) updateProgressInSettings(),
           Row(
@@ -401,6 +405,8 @@ class SettingsPageContent extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (selfUpdateSupported) SettingsHeader(title: "App"),
+        if (selfUpdateSupported) updateActionInSettings(context),
         SettingsHeader(title: "theme".tr()),
         Builder(
           builder: (context) {

@@ -462,3 +462,54 @@ den-hook run inside check_favorites.sh each do a `bin/release --dry-run`).
   while Settings stays open; rotation and moving between pages during a real download; the install
   prompt and the "Allow Clarity to install apps" -> Install path on Android 16; speed and stall behaviour
   over his real link.
+
+# clarity-update-place (2026-11-24): what `check_update_place.sh` pins
+
+Brian, from his phone, after updating Clarity by hand: "also I don't see a way to check for updates". It
+existed only as a tile on the More page. Now it is in three places, on one check and one download. Still
+5.7.1+422, unreleased. Run: `bash .den/checks/check_update_place.sh` (long: it runs a patched copy of
+check_update_progress.sh, which runs check_self_update.sh and check_favorites.sh, each with a
+`bin/release --dry-run`).
+
+## Pins
+
+- **Source** (`git diff 4b71bad`): `version: 5.7.1+422`; `updateChecker.dart`, `updateDownload.dart`,
+  `updateProgressBlock.dart`, `budget/android`, `server/`, `bin/`, `pubspec.yaml`, `pubspec.lock` unchanged.
+  `SettingsPageContent` opens with `if (selfUpdateSupported) SettingsHeader(title: "App")` and
+  `if (selfUpdateSupported) updateActionInSettings(context),`, above the Theme header. The About page has
+  `if (selfUpdateSupported) updateActionInAbout(context),` within 8 lines after `text: getVersionString(),`
+  and the download block (`updateProgressInSettings()`) in both of its layouts. The More tile keeps
+  `title: "Check for updates"` and shows `description: updateCheck.status()`; its block line stays.
+  `updates.dart` goes through `updateCheck.tap(` (manual) and `updateCheck.background()` (on start) and has
+  no `bool _checking` of its own. `updateAction.dart` neither prints nor logs.
+- **Dart** (`dart/update_place_test.dart`, >= 6 widget tests on `UpdateActionRow` / `UpdateActionButton`
+  with a Completer as the check and a `FakeDownloader` whose snapshot is set by hand; the clock is
+  `DateTime.now()` plus offsets): the row reads "Clarity 5.7.1 · Check for updates" and one tap runs one
+  check, "Checking…" shows in both places; "no update" shows "Up to date · checked just now" in place, then
+  "5 min ago", then "at HH:MM" / "on YYYY-MM-DD" computed from the clock; the About action runs the same
+  check; taps during a check answer `busy` and run nothing (the start check too); a running download's
+  `update-block` is inside the row, below the tile, and a tap answers `showDownload` with no check; with
+  `supported: false` nothing shows, not even with a download running.
+- **check_update_progress.sh** from a copy with exactly 3 lines changed: its `source` path, its
+  "settingsPage.dart gains exactly one line" rule turned into "the block line is still there" (this task
+  changes Settings by design), and the favorites copy it makes also excludes `aboutPage.dart` from "no
+  screen changed". Everything else in it, check_self_update.sh included, runs as written.
+
+## Choices
+
+- **Header and place:** "App", the first header of Settings, above Theme, so it is the first thing on
+  the page. One row: an update icon (a spinner while checking), "Clarity <version> · Check for updates",
+  the status as its subtitle, the download's block right under it. Shown only when `selfUpdateSupported`.
+- **Last checked:** in memory only (`UpdateCheckState` in `updateAction.dart`, one instance `updateCheck`
+  in `updates.dart`). Not persisted: after a restart the silent start check fills it in again. The
+  status says "Up to date" only when the last check answered with nothing newer; the checker returns null
+  for an unreachable feed too and cannot tell the two apart (the snackbar still says "or the update feed is
+  unreachable"). The text refreshes on any rebuild; there is no timer ticking it while the page sits open.
+- **Times:** under a minute "just now", under an hour "N min ago", the same day "at HH:MM", else
+  "on YYYY-MM-DD".
+- **About page:** a "Check for updates" text button with its status under it, in the column under the
+  version number, beside the app icon; the download's block under the whole app-information block (it
+  needs the width), in both the narrow and the two-column layout.
+- **More tile:** unchanged title and icon; its description now shows the same status.
+- **One check:** a tap anywhere while a download is active opens the progress popup (as before); while a
+  check runs it does nothing; the start check skips while either runs.

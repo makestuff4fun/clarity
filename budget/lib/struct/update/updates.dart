@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:budget/functions.dart';
 import 'package:budget/struct/settings.dart';
+import 'package:budget/struct/update/updateAction.dart';
 import 'package:budget/struct/update/updateChecker.dart';
 import 'package:budget/struct/update/updateDownload.dart';
 import 'package:budget/struct/update/updateProgressBlock.dart';
@@ -24,51 +25,63 @@ bool get selfUpdateSupported =>
 int get currentVersionCode =>
     int.tryParse(packageInfoGlobal?.buildNumber ?? "") ?? 0;
 
-bool _checking = false;
+/// The one check for the whole app, shared by Settings, About and More (updateAction.dart).
+final UpdateCheckState updateCheck = UpdateCheckState(
+  check: () => UpdateChecker(currentVersionCode: currentVersionCode).check(),
+  downloader: updateDownloader,
+);
+
+String get installedVersionName => packageInfoGlobal?.version ?? "";
 
 /// On start: silent unless there is a newer release (offline, no feed: nothing shown).
 Future<void> checkForUpdateOnStart(BuildContext context) async {
-  if (!selfUpdateSupported || _checking) return;
-  _checking = true;
-  try {
-    final info = await UpdateChecker(currentVersionCode: currentVersionCode).check();
-    if (info != null && context.mounted) offerUpdate(context, info);
-  } finally {
-    _checking = false;
-  }
+  if (!selfUpdateSupported) return;
+  final info = await updateCheck.background();
+  if (info != null && context.mounted) offerUpdate(context, info);
 }
 
-/// The Settings action: says so when there is nothing newer.
+/// The action in Settings, About and More: says so when there is nothing newer.
 Future<void> checkForUpdatesManually(BuildContext context) async {
   if (!selfUpdateSupported) {
     openSnackbar(SnackbarMessage(title: "Updates are installed on Android only"));
     return;
   }
-  // A download is going (or waits for Retry / Install): show it rather than check again.
-  if (updateDownloader.snapshot.active) {
-    openUpdateProgress(context);
-    return;
-  }
-  if (_checking) return;
-  _checking = true;
-  try {
-    openSnackbar(SnackbarMessage(
-        title: "Checking for updates…", icon: Icons.system_update_rounded));
-    final info = await UpdateChecker(currentVersionCode: currentVersionCode).check();
-    if (!context.mounted) return;
-    if (info == null) {
+  // A download is going (or waits for Retry / Install): show it rather than check again
+  // (UpdateCheckState.tap answers showDownload while updateDownloader.snapshot.active).
+  final (outcome, info) = await updateCheck.tap(
+      onStart: () => openSnackbar(SnackbarMessage(
+          title: "Checking for updates…", icon: Icons.system_update_rounded)));
+  if (!context.mounted) return;
+  switch (outcome) {
+    case UpdateTap.showDownload:
+      openUpdateProgress(context);
+    case UpdateTap.busy:
+      break;
+    case UpdateTap.upToDate:
       openSnackbar(SnackbarMessage(
         title: "No update available",
-        description: "Clarity ${packageInfoGlobal?.version ?? ""} is the latest, or the update feed is unreachable",
+        description: "Clarity $installedVersionName is the latest, or the update feed is unreachable",
         icon: Icons.check_rounded,
       ));
-    } else {
-      offerUpdate(context, info);
-    }
-  } finally {
-    _checking = false;
+    case UpdateTap.found:
+      offerUpdate(context, info!);
   }
 }
+
+/// The Settings row (SettingsPageContent, under "App").
+Widget updateActionInSettings(BuildContext context) => UpdateActionRow(
+      supported: selfUpdateSupported,
+      versionName: installedVersionName,
+      state: updateCheck,
+      onTap: () => checkForUpdatesManually(context),
+    );
+
+/// The About page's action, beside the version.
+Widget updateActionInAbout(BuildContext context) => UpdateActionButton(
+      supported: selfUpdateSupported,
+      state: updateCheck,
+      onTap: () => checkForUpdatesManually(context),
+    );
 
 void offerUpdate(BuildContext context, UpdateInfo info) {
   openPopup(
