@@ -1,0 +1,59 @@
+title: "Clarity 5.7.1: Check for updates where he looks for it (Settings, with the version, and About)"
+priority: 10
+model: opus
+provider: claude-main
+runaway: {minutes: 180}
+needs: []
+context: [README.md, budget/pubspec.yaml, budget/lib/struct/update/updates.dart, budget/lib/struct/update/updateProgressBlock.dart,
+          budget/lib/struct/update/updateDownload.dart, budget/lib/pages/settingsPage.dart, budget/lib/pages/aboutPage.dart,
+          .den/checks/check_update_progress.sh, .den/checks/dart/update_progress_test.dart, .den/checks/check_self_update.sh, .den/checks/NOTES.md]
+protected: [.den/tasks/**, .den/project.yaml, .den/setup.sh, .den/checks/check_release_r1.sh, .den/checks/check_self_update.sh,
+            .den/checks/check_app_sync.sh, .den/checks/check_server.py, .den/checks/check_money_summary.py, .den/checks/check_startup.sh,
+            .den/checks/check_den_hook.sh, .den/checks/check_favorites.sh, .den/checks/check_update_progress.sh,
+            .den/checks/dart/update_progress_test.dart, server/**]
+done_when: bash .den/checks/check_update_place.sh
+do: |
+  THE JOB
+  Brian, 2026-11-24, from his phone, after updating Clarity by hand: "also I don't see a way to check for
+  updates". It exists, but only as one tile on the More page, between About and the bill splitter
+  (budget/lib/pages/settingsPage.dart, in context), where he did not find it. The download's progress block
+  was built earlier today (5.7.1+422, updateProgressBlock.dart and updates.dart, in context; unreleased).
+  Put the action where a person looks for it:
+  - IN SETTINGS ITSELF (SettingsPageContent), near the top under its own small header (e.g. "App"): one row
+    that shows the installed version and the action ("Clarity 5.7.1 · Check for updates"). When there is
+    nothing newer the row says so in place ("Up to date · checked just now", then the time of the last
+    check) as well as today's snackbar; while a check runs it says "Checking…"; while a download runs the
+    existing progress block shows under this row too.
+  - ON THE ABOUT PAGE, beside the version it already shows: the same action.
+  - THE MORE TILE STAYS. All three run the same check and show the same state: a download started from one
+    is visible from the others, and tapping any of them while a check or download runs starts nothing new.
+  - Android only, as today (`selfUpdateSupported`); on other platforms none of the three shows.
+  - Nothing else changes: the feed, verification, the progress block, the install channel. The version stays
+    5.7.1+422 (unreleased): do NOT bump it and do NOT publish.
+  What you decide (under "## Choices" in .den/checks/NOTES.md): the header's wording and where exactly the
+  row sits; how "last checked" is kept (in memory is enough; say if you persist it); the About page's
+  layout.
+  .den/checks/check_update_place.sh (yours; the done_when), failing on today's tree: widget tests that
+  Settings shows the row with the installed version and that a tap runs the check once; that "no update"
+  shows in place; that the About page offers the action; that a second tap during a check starts nothing;
+  that a running download's block shows under the Settings row; that none of it shows when
+  selfUpdateSupported is false; plus check_update_progress.sh and check_self_update.sh still green. Add its
+  pins to .den/checks/NOTES.md. Never hardcode a calendar day or wall-clock time in a test.
+
+  THE WHY
+  He looked for it and did not find it, so for him the app could not be updated from inside. An update
+  action belongs with the version number, in Settings and About, where every other app has it.
+
+  THE GUARDRAILS
+  - Do not touch server/, the den hook, the favorites code, the download or verification code, or the earlier
+    checks. Do not change signing. Never print a password or key.
+  - Do not run bin/release without --dry-run. Do not write under /srv/www. Do not install anything on a phone.
+  - One Flutter/Gradle build at a time; never `./gradlew --stop`.
+  - budget/pubspec.lock: commit a change only if a dependency change needs it (none should), and say so.
+  - NEVER run a command that feeds a script through a heredoc. Write the script to a file and run the file.
+  - Wait for every background shell you started to finish before your verdict. Stage files by name.
+
+  DONE MEANS
+  - `bash .den/checks/check_update_place.sh` exits 0 on your commit and you saw it fail before your change.
+  - Report in 3 bullets: where the three places are, what each shows in each state, and what only a phone
+    can prove. Before reporting, check each claim against a tool result from this session.
