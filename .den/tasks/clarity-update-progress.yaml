@@ -1,11 +1,11 @@
-title: "Clarity 5.7.1: the updater shows its download (progress, size, speed, time left) like den-app's"
+title: "Clarity 5.7.1: the updater shows its download (progress, size, speed, time left), and Check for updates is in Settings"
 priority: 11
 model: opus
 provider: claude-main
 runaway: {minutes: 240}
 needs: []
 context: [README.md, budget/pubspec.yaml, budget/lib/struct/update/updates.dart, budget/lib/struct/update/updateChecker.dart,
-          budget/lib/pages/settingsPage.dart, bin/release, .den/checks/check_self_update.sh, .den/checks/check_startup.sh,
+          budget/lib/pages/settingsPage.dart, budget/lib/pages/aboutPage.dart, bin/release, .den/checks/check_self_update.sh, .den/checks/check_startup.sh,
           .den/checks/check_favorites.sh, .den/checks/NOTES.md,
           /home/bairui/projects/den-app/app/src/main/kotlin/com/hanquest/den/update/UpdateSection.kt,
           /home/bairui/projects/den-app/app/src/main/kotlin/com/hanquest/den/update/Updates.kt,
@@ -42,6 +42,13 @@ do: |
     button on the block so he does not have to download again.
   - Leaving the screen, opening another page of Clarity or rotating does not stop or restart the download.
     (Surviving the app being killed is NOT asked.)
+  - "CHECK FOR UPDATES" WHERE HE LOOKS. Brian, the same morning: "also I don't see a way to check for updates".
+    It exists, but only as one tile on the More page, between About and the bill splitter
+    (settingsPage.dart, in context), where he did not find it. Put it where a person looks for it: in
+    Settings itself, near the top under its own small header (e.g. "App"), as a row that also shows the
+    installed version ("Clarity 5.7.1 · Check for updates"), and on the About page beside the version. Keep
+    the More tile. All three run the same action and show the same block. When there is nothing newer the
+    row says so in place ("Up to date · checked just now") as well as the snackbar.
   - The check for updates itself, the feed, the verification and the install channel are unchanged.
     check_self_update.sh (protected, in context) must still pass; if one of its pins stands in the way of the
     above, stop and say exactly which.
@@ -57,7 +64,8 @@ do: |
     total; smoothed speed; time left; a stall and its recovery; a failure then Retry resuming with a Range
     request; a server without Range starting over; a resumed file passing sha256 and a corrupted one refused
     and deleted; Cancel removing the partial file), widget tests of the block (the five things shown while
-    downloading, the stalled line, the failed line with Retry, the verified state), check_self_update.sh and
+    downloading, the stalled line, the failed line with Retry, the verified state) and of the three places
+    that offer Check for updates (Settings shows the installed version; each starts the same check), check_self_update.sh and
     check_favorites.sh still green, and `bin/release --dry-run` still passing check_startup's APK rule. Add
     its pins to .den/checks/NOTES.md.
   - Never hardcode a calendar day or wall-clock time in a test.
