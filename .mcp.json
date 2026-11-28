@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "den": {
+      "command": "/home/bairui/projects/den-fleet/bin/den-channel",
+      "args": []
+    }
+  }
+}
